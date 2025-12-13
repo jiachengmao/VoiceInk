@@ -125,7 +125,8 @@ class OllamaService: ObservableObject {
             "prompt": text,
             "system": systemPrompt,
             "temperature": defaultTemperature,
-            "stream": false
+            "stream": false,
+            "think": "false"
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

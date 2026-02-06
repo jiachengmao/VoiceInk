@@ -10,7 +10,7 @@ enum CloudTranscriptionError: Error, LocalizedError {
     case networkError(Error)
     case noTranscriptionReturned
     case dataEncodingError
-    
+
     var errorDescription: String? {
         switch self {
         case .unsupportedProvider:
@@ -21,9 +21,9 @@ enum CloudTranscriptionError: Error, LocalizedError {
             return "The provided API key is invalid."
         case .audioFileNotFound:
             return "The audio file to transcribe could not be found."
-        case .apiRequestFailed(let statusCode, let message):
+        case let .apiRequestFailed(statusCode, message):
             return "The API request failed with status code \(statusCode): \(message)"
-        case .networkError(let error):
+        case let .networkError(error):
             return "A network error occurred: \(error.localizedDescription)"
         case .noTranscriptionReturned:
             return "The API returned an empty or invalid response."
@@ -34,7 +34,6 @@ enum CloudTranscriptionError: Error, LocalizedError {
 }
 
 class CloudTranscriptionService: TranscriptionService {
-    
     private lazy var groqService = GroqTranscriptionService()
     private lazy var elevenLabsService = ElevenLabsTranscriptionService()
     private lazy var deepgramService = DeepgramTranscriptionService()
@@ -42,10 +41,10 @@ class CloudTranscriptionService: TranscriptionService {
     private lazy var geminiService = GeminiTranscriptionService()
     private lazy var openAICompatibleService = OpenAICompatibleTranscriptionService()
     private lazy var sonioxService = SonioxTranscriptionService()
-    
+
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
         var text: String
-        
+
         switch model.provider {
         case .groq:
             text = try await groqService.transcribe(audioURL: audioURL, model: model)
@@ -67,10 +66,7 @@ class CloudTranscriptionService: TranscriptionService {
         default:
             throw CloudTranscriptionError.unsupportedProvider
         }
-        
+
         return text
     }
-
-    
-
-} 
+}

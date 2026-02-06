@@ -1,5 +1,6 @@
 import SwiftUI
-// Edit existing word replacement entry
+
+/// Edit existing word replacement entry
 struct EditReplacementSheet: View {
     @ObservedObject var manager: WordReplacementManager
     let originalKey: String
@@ -10,6 +11,7 @@ struct EditReplacementSheet: View {
     @State private var replacementWord: String
 
     // MARK: – Initialiser
+
     init(manager: WordReplacementManager, originalKey: String) {
         self.manager = manager
         self.originalKey = originalKey
@@ -27,6 +29,7 @@ struct EditReplacementSheet: View {
     }
 
     // MARK: – Subviews
+
     private var header: some View {
         HStack {
             Button("Cancel", role: .cancel) { dismiss() }
@@ -83,7 +86,6 @@ struct EditReplacementSheet: View {
                 }
                 TextField("Enter word or phrase to replace (use commas for multiple)", text: $originalWord)
                     .textFieldStyle(.roundedBorder)
-                
             }
             .padding(.horizontal)
 
@@ -112,6 +114,7 @@ struct EditReplacementSheet: View {
     }
 
     // MARK: – Actions
+
     private func saveChanges() {
         let newOriginal = originalWord.trimmingCharacters(in: .whitespacesAndNewlines)
         let newReplacement = replacementWord
@@ -128,10 +131,11 @@ struct EditReplacementSheet: View {
 }
 
 // MARK: – Preview
+
 #if DEBUG
-struct EditReplacementSheet_Previews: PreviewProvider {
-    static var previews: some View {
-        EditReplacementSheet(manager: WordReplacementManager(), originalKey: "hello")
+    struct EditReplacementSheet_Previews: PreviewProvider {
+        static var previews: some View {
+            EditReplacementSheet(manager: WordReplacementManager(), originalKey: "hello")
+        }
     }
-}
 #endif

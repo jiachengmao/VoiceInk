@@ -3,7 +3,7 @@ import SwiftUI
 struct PowerModePopover: View {
     @ObservedObject var powerModeManager = PowerModeManager.shared
     @State private var selectedConfig: PowerModeConfig?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Power Mode")
@@ -11,10 +11,10 @@ struct PowerModePopover: View {
                 .foregroundColor(.white.opacity(0.9))
                 .padding(.horizontal)
                 .padding(.top, 8)
-            
+
             Divider()
                 .background(Color.white.opacity(0.1))
-            
+
             ScrollView {
                 let enabledConfigs = powerModeManager.configurations.filter { $0.isEnabled }
                 VStack(alignment: .leading, spacing: 4) {
@@ -60,7 +60,7 @@ struct PowerModePopover: View {
             selectedConfig = newValue
         }
     }
-    
+
     private func applySelectedConfiguration() {
         Task {
             if let config = selectedConfig {
@@ -74,7 +74,7 @@ struct PowerModeRow: View {
     let config: PowerModeConfig
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
@@ -102,4 +102,4 @@ struct PowerModeRow: View {
         .background(isSelected ? Color.white.opacity(0.1) : Color.clear)
         .cornerRadius(4)
     }
-} 
+}

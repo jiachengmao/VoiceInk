@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct TranscriptionHistoryView: View {
     @Environment(\.modelContext) private var modelContext
@@ -9,21 +9,21 @@ struct TranscriptionHistoryView: View {
     @State private var showDeleteConfirmation = false
     @State private var isViewCurrentlyVisible = false
     @State private var showAnalysisView = false
-    
+
     private let exportService = VoiceInkCSVExportService()
-    
+
     // Pagination states
     @State private var displayedTranscriptions: [Transcription] = []
     @State private var isLoading = false
     @State private var hasMoreContent = true
-    
+
     // Cursor-based pagination - track the last timestamp
     @State private var lastTimestamp: Date?
     private let pageSize = 20
-    
+
     @Query(Self.createLatestTranscriptionIndicatorDescriptor()) private var latestTranscriptionIndicator: [Transcription]
-    
-    // Static function to create the FetchDescriptor for the latest transcription indicator
+
+    /// Static function to create the FetchDescriptor for the latest transcription indicator
     private static func createLatestTranscriptionIndicatorDescriptor() -> FetchDescriptor<Transcription> {
         var descriptor = FetchDescriptor<Transcription>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
@@ -31,20 +31,20 @@ struct TranscriptionHistoryView: View {
         descriptor.fetchLimit = 1
         return descriptor
     }
-    
-    // Cursor-based query descriptor
+
+    /// Cursor-based query descriptor
     private func cursorQueryDescriptor(after timestamp: Date? = nil) -> FetchDescriptor<Transcription> {
         var descriptor = FetchDescriptor<Transcription>(
             sortBy: [SortDescriptor(\Transcription.timestamp, order: .reverse)]
         )
-        
+
         // Build the predicate based on search text and timestamp cursor
         if let timestamp = timestamp {
             if !searchText.isEmpty {
                 descriptor.predicate = #Predicate<Transcription> { transcription in
                     (transcription.text.localizedStandardContains(searchText) ||
-                    (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)) &&
-                    transcription.timestamp < timestamp
+                        (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)) &&
+                        transcription.timestamp < timestamp
                 }
             } else {
                 descriptor.predicate = #Predicate<Transcription> { transcription in
@@ -54,19 +54,19 @@ struct TranscriptionHistoryView: View {
         } else if !searchText.isEmpty {
             descriptor.predicate = #Predicate<Transcription> { transcription in
                 transcription.text.localizedStandardContains(searchText) ||
-                (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
+                    (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
             }
         }
-        
+
         descriptor.fetchLimit = pageSize
         return descriptor
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 searchBar
-                
+
                 if displayedTranscriptions.isEmpty && !isLoading {
                     emptyStateView
                 } else {
@@ -92,7 +92,7 @@ struct TranscriptionHistoryView: View {
                                         }
                                     }
                                 }
-                                
+
                                 if hasMoreContent {
                                     Button(action: {
                                         Task {
@@ -122,7 +122,7 @@ struct TranscriptionHistoryView: View {
                             .padding(.bottom, !selectedTranscriptions.isEmpty ? 60 : 0)
                         }
                         .padding(.vertical, 16)
-                        .onChange(of: expandedTranscription) { old, new in
+                        .onChange(of: expandedTranscription) { _, new in
                             if let transcription = new {
                                 proxy.scrollTo(transcription, anchor: nil)
                             }
@@ -131,7 +131,7 @@ struct TranscriptionHistoryView: View {
                 }
             }
             .background(Color(NSColor.controlBackgroundColor))
-            
+
             // Selection toolbar as an overlay
             if !selectedTranscriptions.isEmpty {
                 selectionToolbar
@@ -190,7 +190,7 @@ struct TranscriptionHistoryView: View {
             }
         }
     }
-    
+
     private var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -204,7 +204,7 @@ struct TranscriptionHistoryView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -220,15 +220,15 @@ struct TranscriptionHistoryView: View {
         .background(CardBackground(isSelected: false))
         .padding(24)
     }
-    
+
     private var selectionToolbar: some View {
         HStack(spacing: 12) {
             Text("\(selectedTranscriptions.count) selected")
                 .foregroundColor(.secondary)
                 .font(.system(size: 14))
-            
+
             Spacer()
-            
+
             Button(action: {
                 showAnalysisView = true
             }) {
@@ -238,7 +238,7 @@ struct TranscriptionHistoryView: View {
                 }
             }
             .buttonStyle(.borderless)
-            
+
             Button(action: {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
@@ -248,7 +248,7 @@ struct TranscriptionHistoryView: View {
                 }
             }
             .buttonStyle(.borderless)
-            
+
             Button(action: {
                 showDeleteConfirmation = true
             }) {
@@ -258,7 +258,7 @@ struct TranscriptionHistoryView: View {
                 }
             }
             .buttonStyle(.borderless)
-            
+
             if selectedTranscriptions.count < displayedTranscriptions.count {
                 Button("Select All") {
                     Task {
@@ -280,19 +280,19 @@ struct TranscriptionHistoryView: View {
                 .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
         )
     }
-    
+
     @MainActor
     private func loadInitialContent() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             // Reset cursor
             lastTimestamp = nil
-            
+
             // Fetch initial page without a cursor
             let items = try modelContext.fetch(cursorQueryDescriptor())
-            
+
             displayedTranscriptions = items
             // Update cursor to the timestamp of the last item
             lastTimestamp = items.last?.timestamp
@@ -302,18 +302,18 @@ struct TranscriptionHistoryView: View {
             print("Error loading transcriptions: \(error)")
         }
     }
-    
+
     @MainActor
     private func loadMoreContent() async {
         guard !isLoading, hasMoreContent, let lastTimestamp = lastTimestamp else { return }
-        
+
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             // Fetch next page using the cursor
             let newItems = try modelContext.fetch(cursorQueryDescriptor(after: lastTimestamp))
-            
+
             // Append new items to the displayed list
             displayedTranscriptions.append(contentsOf: newItems)
             // Update cursor to the timestamp of the last new item
@@ -324,7 +324,7 @@ struct TranscriptionHistoryView: View {
             print("Error loading more transcriptions: \(error)")
         }
     }
-    
+
     @MainActor
     private func resetPagination() {
         displayedTranscriptions = []
@@ -332,34 +332,36 @@ struct TranscriptionHistoryView: View {
         hasMoreContent = true
         isLoading = false
     }
-    
+
     private func deleteTranscription(_ transcription: Transcription) {
         // First delete the audio file if it exists
         if let urlString = transcription.audioFileURL,
-           let url = URL(string: urlString) {
+           let url = URL(string: urlString)
+        {
             try? FileManager.default.removeItem(at: url)
         }
-        
+
         modelContext.delete(transcription)
         if expandedTranscription == transcription {
             expandedTranscription = nil
         }
-        
+
         // Remove from selection if selected
         selectedTranscriptions.remove(transcription)
-        
+
         // Refresh the view
         Task {
             try? await modelContext.save()
             await loadInitialContent()
         }
     }
-    
+
     private func deleteSelectedTranscriptions() {
         // Delete audio files and transcriptions
         for transcription in selectedTranscriptions {
             if let urlString = transcription.audioFileURL,
-               let url = URL(string: urlString) {
+               let url = URL(string: urlString)
+            {
                 try? FileManager.default.removeItem(at: url)
             }
             modelContext.delete(transcription)
@@ -367,17 +369,17 @@ struct TranscriptionHistoryView: View {
                 expandedTranscription = nil
             }
         }
-        
+
         // Clear selection
         selectedTranscriptions.removeAll()
-        
+
         // Save changes and refresh
         Task {
             try? await modelContext.save()
             await loadInitialContent()
         }
     }
-    
+
     private func toggleSelection(_ transcription: Transcription) {
         if selectedTranscriptions.contains(transcription) {
             selectedTranscriptions.remove(transcription)
@@ -385,35 +387,35 @@ struct TranscriptionHistoryView: View {
             selectedTranscriptions.insert(transcription)
         }
     }
-    
-    // Modified function to select all transcriptions in the database
+
+    /// Modified function to select all transcriptions in the database
     private func selectAllTranscriptions() async {
         do {
             // Create a descriptor without pagination limits to get all IDs
             var allDescriptor = FetchDescriptor<Transcription>()
-            
+
             // Apply search filter if needed
             if !searchText.isEmpty {
                 allDescriptor.predicate = #Predicate<Transcription> { transcription in
                     transcription.text.localizedStandardContains(searchText) ||
-                    (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
+                        (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
                 }
             }
-            
+
             // For better performance, only fetch the IDs
             allDescriptor.propertiesToFetch = [\.id]
-            
+
             // Fetch all matching transcriptions
             let allTranscriptions = try modelContext.fetch(allDescriptor)
-            
+
             // Create a set of all visible transcriptions for quick lookup
             let visibleIds = Set(displayedTranscriptions.map { $0.id })
-            
+
             // Add all transcriptions to the selection
             await MainActor.run {
                 // First add all visible transcriptions directly
                 selectedTranscriptions = Set(displayedTranscriptions)
-                
+
                 // Then add any non-visible transcriptions by ID
                 for transcription in allTranscriptions {
                     if !visibleIds.contains(transcription.id) {

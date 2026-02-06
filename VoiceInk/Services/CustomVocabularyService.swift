@@ -35,7 +35,8 @@ class CustomVocabularyService {
     private func migrateOldDataIfNeeded() {
         // Migrate from old "CustomDictionaryItems" key to new "CustomVocabularyItems" key
         if UserDefaults.standard.data(forKey: "CustomVocabularyItems") == nil,
-           let oldData = UserDefaults.standard.data(forKey: "CustomDictionaryItems") {
+           let oldData = UserDefaults.standard.data(forKey: "CustomDictionaryItems")
+        {
             UserDefaults.standard.set(oldData, forKey: "CustomVocabularyItems")
             UserDefaults.standard.removeObject(forKey: "CustomDictionaryItems")
         }

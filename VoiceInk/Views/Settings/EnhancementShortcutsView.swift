@@ -1,9 +1,9 @@
-import SwiftUI
 import KeyboardShortcuts
+import SwiftUI
 
 struct EnhancementShortcutsView: View {
     @ObservedObject private var shortcutSettings = EnhancementShortcutSettings.shared
-    
+
     var body: some View {
         VStack(spacing: 12) {
             ShortcutRow(
@@ -24,7 +24,7 @@ struct EnhancementShortcutsView: View {
 
 struct EnhancementShortcutsSection: View {
     @State private var isExpanded = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             Button {
@@ -37,7 +37,7 @@ struct EnhancementShortcutsSection: View {
                         .font(.system(size: 20))
                         .foregroundColor(.accentColor)
                         .frame(width: 24, height: 24)
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Enhancement Shortcuts")
                             .font(.headline)
@@ -46,9 +46,9 @@ struct EnhancementShortcutsSection: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.down")
                         .rotationEffect(.degrees(isExpanded ? 0 : -90))
                         .foregroundColor(.secondary)
@@ -59,14 +59,14 @@ struct EnhancementShortcutsSection: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            
+
             if isExpanded {
                 Divider()
                     .transition(.opacity)
-                
+
                 VStack(alignment: .leading, spacing: 16) {
                     EnhancementShortcutsView()
-                    
+
                     Text("Enhancement shortcuts are available only when the recorder is visible and VoiceInk is running.")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -86,6 +86,7 @@ struct EnhancementShortcutsSection: View {
 }
 
 // MARK: - Supporting Views
+
 private struct ShortcutRow: View {
     let title: String
     let description: String
@@ -134,7 +135,6 @@ private struct ShortcutRow: View {
         .background(CardBackground(isSelected: false))
     }
 
-    @ViewBuilder
     private func keyDisplayView(isActive: Bool? = nil) -> some View {
         HStack(spacing: 8) {
             ForEach(keyDisplay, id: \.self) { key in
@@ -162,7 +162,7 @@ private struct KeyChip: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.controlBackgroundColor).opacity(active ? 0.9 : 0.6),
-                                Color(NSColor.controlBackgroundColor).opacity(active ? 0.7 : 0.5)
+                                Color(NSColor.controlBackgroundColor).opacity(active ? 0.7 : 0.5),
                             ]),
                             startPoint: .top,
                             endPoint: .bottom

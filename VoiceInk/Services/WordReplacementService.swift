@@ -2,17 +2,18 @@ import Foundation
 
 class WordReplacementService {
     static let shared = WordReplacementService()
-    
+
     private init() {}
-    
+
     func applyReplacements(to text: String) -> String {
         guard let replacements = UserDefaults.standard.dictionary(forKey: "wordReplacements") as? [String: String],
-              !replacements.isEmpty else {
+              !replacements.isEmpty
+        else {
             return text // No replacements to apply
         }
-        
+
         var modifiedText = text
-        
+
         // Apply replacements (case-insensitive)
         for (originalGroup, replacement) in replacements {
             // Split comma-separated originals at apply time only
@@ -42,18 +43,18 @@ class WordReplacementService {
                 }
             }
         }
-        
+
         return modifiedText
     }
 
     private func usesWordBoundaries(for text: String) -> Bool {
         // Returns false for languages without spaces (CJK, Thai), true for spaced languages
         let nonSpacedScripts: [ClosedRange<UInt32>] = [
-            0x3040...0x309F, // Hiragana
-            0x30A0...0x30FF, // Katakana
-            0x4E00...0x9FFF, // CJK Unified Ideographs
-            0xAC00...0xD7AF, // Hangul Syllables
-            0x0E00...0x0E7F, // Thai
+            0x3040 ... 0x309F, // Hiragana
+            0x30A0 ... 0x30FF, // Katakana
+            0x4E00 ... 0x9FFF, // CJK Unified Ideographs
+            0xAC00 ... 0xD7AF, // Hangul Syllables
+            0x0E00 ... 0x0E7F, // Thai
         ]
 
         for scalar in text.unicodeScalars {

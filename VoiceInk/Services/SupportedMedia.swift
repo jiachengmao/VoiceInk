@@ -1,13 +1,13 @@
 import Foundation
 import UniformTypeIdentifiers
 
-struct SupportedMedia {
+enum SupportedMedia {
     static let extensions: Set<String> = [
-        "wav", "mp3", "m4a", "aiff", "mp4", "mov", "aac", "flac", "caf"
+        "wav", "mp3", "m4a", "aiff", "mp4", "mov", "aac", "flac", "caf",
     ]
 
     static let contentTypes: [UTType] = [
-        .audio, .movie
+        .audio, .movie,
     ]
 
     static func isSupported(url: URL) -> Bool {
@@ -17,12 +17,11 @@ struct SupportedMedia {
         }
 
         if let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
-           let contentType = resourceValues.contentType {
+           let contentType = resourceValues.contentType
+        {
             return contentTypes.contains(where: { contentType.conforms(to: $0) })
         }
 
         return false
     }
 }
-
-

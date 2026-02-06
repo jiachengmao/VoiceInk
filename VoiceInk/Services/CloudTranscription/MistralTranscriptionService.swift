@@ -3,7 +3,7 @@ import os
 
 class MistralTranscriptionService {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MistralTranscriptionService")
-    
+
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
         logger.notice("Sending transcription request to Mistral for model: \(model.name)")
         let apiKey = UserDefaults.standard.string(forKey: "MistralAPIKey") ?? ""
@@ -43,7 +43,7 @@ class MistralTranscriptionService {
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
         request.httpBody = body
-        
+
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -70,4 +70,4 @@ class MistralTranscriptionService {
 
 struct MistralTranscriptionResponse: Codable {
     let text: String
-} 
+}

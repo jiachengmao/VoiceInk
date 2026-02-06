@@ -1,10 +1,10 @@
 import SwiftUI
 
-// Enhancement Prompt Popover for recorder views
+/// Enhancement Prompt Popover for recorder views
 struct EnhancementPromptPopover: View {
     @EnvironmentObject var enhancementService: AIEnhancementService
     @State private var selectedPrompt: CustomPrompt?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Enhancement Toggle at the top
@@ -13,15 +13,15 @@ struct EnhancementPromptPopover: View {
                     .foregroundColor(.white.opacity(0.9))
                     .font(.headline)
                     .lineLimit(1)
-                
+
                 Spacer()
             }
             .padding(.horizontal)
             .padding(.top, 8)
-            
+
             Divider()
                 .background(Color.white.opacity(0.1))
-            
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     // Available Enhancement Prompts
@@ -53,19 +53,19 @@ struct EnhancementPromptPopover: View {
             // Set the initially selected prompt
             selectedPrompt = enhancementService.activePrompt
         }
-        .onChange(of: enhancementService.selectedPromptId) { oldValue, newValue in
+        .onChange(of: enhancementService.selectedPromptId) { _, _ in
             selectedPrompt = enhancementService.activePrompt
         }
     }
 }
 
-// Row view for each enhancement prompt in the popover
+/// Row view for each enhancement prompt in the popover
 struct EnhancementPromptRow: View {
     let prompt: CustomPrompt
     let isSelected: Bool
     let isDisabled: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
@@ -95,4 +95,4 @@ struct EnhancementPromptRow: View {
         .background(isSelected ? Color.white.opacity(0.1) : Color.clear)
         .cornerRadius(4)
     }
-} 
+}

@@ -4,7 +4,7 @@ struct PromptEditorView: View {
     enum Mode {
         case add
         case edit(CustomPrompt)
-        
+
         static func == (lhs: Mode, rhs: Mode) -> Bool {
             switch (lhs, rhs) {
             case (.add, .add):
@@ -16,7 +16,7 @@ struct PromptEditorView: View {
             }
         }
     }
-    
+
     let mode: Mode
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var enhancementService: AIEnhancementService
@@ -28,14 +28,14 @@ struct PromptEditorView: View {
     @State private var showingPredefinedPrompts = false
     @State private var useSystemInstructions: Bool
     @State private var showingIconPicker = false
-    
+
     private var isEditingPredefinedPrompt: Bool {
-        if case .edit(let prompt) = mode {
+        if case let .edit(prompt) = mode {
             return prompt.isPredefined
         }
         return false
     }
-    
+
     init(mode: Mode) {
         self.mode = mode
         switch mode {
@@ -46,7 +46,7 @@ struct PromptEditorView: View {
             _description = State(initialValue: "")
             _triggerWords = State(initialValue: [])
             _useSystemInstructions = State(initialValue: true)
-        case .edit(let prompt):
+        case let .edit(prompt):
             _title = State(initialValue: prompt.title)
             _promptText = State(initialValue: prompt.promptText)
             _selectedIcon = State(initialValue: prompt.icon)
@@ -55,7 +55,7 @@ struct PromptEditorView: View {
             _useSystemInstructions = State(initialValue: prompt.useSystemInstructions)
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with modern styling
@@ -70,7 +70,7 @@ struct PromptEditorView: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
-                    
+
                     Button {
                         save()
                         dismiss()
@@ -88,7 +88,7 @@ struct PromptEditorView: View {
                 Color(NSColor.windowBackgroundColor)
                     .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
             )
-            
+
             ScrollView {
                 VStack(spacing: 24) {
                     if isEditingPredefinedPrompt {
@@ -100,18 +100,18 @@ struct PromptEditorView: View {
                                 .foregroundColor(.primary)
                                 .padding(.horizontal)
                                 .padding(.top, 8)
-                            
+
                             Text("You can only customize the trigger words for system prompts.")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal)
-                            
+
                             // Trigger Words Field using reusable component
                             TriggerWordsEditor(triggerWords: $triggerWords)
                                 .padding(.horizontal)
                         }
                         .padding(.vertical, 20)
-                        
+
                     } else {
                         // Full editing interface for custom prompts
                         // Title and Icon Section with improved layout
@@ -126,13 +126,13 @@ struct PromptEditorView: View {
                                     .font(.body)
                             }
                             .frame(maxWidth: .infinity)
-                            
+
                             // Icon Selector with preview
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Icon")
                                     .font(.headline)
                                     .foregroundColor(.secondary)
-                                
+
                                 // Preview of selected icon - clickable to open popover (square button)
                                 Button(action: {
                                     showingIconPicker = true
@@ -156,37 +156,37 @@ struct PromptEditorView: View {
                         }
                         .padding(.horizontal)
                         .padding(.top, 8)
-                        
+
                         // Description Field
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Description")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
-                            
+
                             Text("Add a brief description of what this prompt does")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                            
+
                             TextField("Enter a description", text: $description)
                                 .textFieldStyle(.roundedBorder)
                                 .font(.body)
                         }
                         .padding(.horizontal)
-                        
+
                         // Prompt Text Section with improved styling
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Prompt Instructions")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
-                            
+
                             Text("Define how AI should enhance your transcriptions")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                            
+
                             if !isEditingPredefinedPrompt {
                                 HStack(spacing: 8) {
                                     Toggle("Use System Instructions", isOn: $useSystemInstructions)
-                                    
+
                                     InfoTip(
                                         title: "System Instructions",
                                         message: "If enabled, your instructions are combined with a general-purpose template to improve transcription quality.\n\nDisable for full control over the AI's system prompt (for advanced users)."
@@ -209,11 +209,11 @@ struct PromptEditorView: View {
                                 )
                         }
                         .padding(.horizontal)
-                        
+
                         // Trigger Words Field using reusable component
                         TriggerWordsEditor(triggerWords: $triggerWords)
                             .padding(.horizontal)
-                        
+
                         if case .add = mode {
                             // Popover keeps templates accessible without taking space in the layout
                             Button("Start with a Predefined Template") {
@@ -249,7 +249,7 @@ struct PromptEditorView: View {
         }
         .frame(minWidth: 700, minHeight: 500)
     }
-    
+
     private func save() {
         switch mode {
         case .add:
@@ -261,7 +261,7 @@ struct PromptEditorView: View {
                 triggerWords: triggerWords,
                 useSystemInstructions: useSystemInstructions
             )
-        case .edit(let prompt):
+        case let .edit(prompt):
             let updatedPrompt = CustomPrompt(
                 id: prompt.id,
                 title: prompt.isPredefined ? prompt.title : title,
@@ -278,21 +278,21 @@ struct PromptEditorView: View {
     }
 }
 
-// Reusable Trigger Words Editor Component
+/// Reusable Trigger Words Editor Component
 struct TriggerWordsEditor: View {
     @Binding var triggerWords: [String]
     @State private var newTriggerWord: String = ""
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Trigger Words")
                 .font(.headline)
                 .foregroundColor(.secondary)
-            
+
             Text("Add multiple words that can activate this prompt")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
             // Display existing trigger words as tags
             if !triggerWords.isEmpty {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 140, maximum: 220))], spacing: 8) {
@@ -303,7 +303,7 @@ struct TriggerWordsEditor: View {
                     }
                 }
             }
-            
+
             // Input for new trigger word
             HStack {
                 TextField("Add trigger word", text: $newTriggerWord)
@@ -312,7 +312,7 @@ struct TriggerWordsEditor: View {
                     .onSubmit {
                         addTriggerWord()
                     }
-                
+
                 Button("Add") {
                     addTriggerWord()
                 }
@@ -320,35 +320,34 @@ struct TriggerWordsEditor: View {
             }
         }
     }
-    
+
     private func addTriggerWord() {
         let trimmedWord = newTriggerWord.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty else { return }
-        
+
         // Check for duplicates (case insensitive)
         let lowerCaseWord = trimmedWord.lowercased()
         guard !triggerWords.contains(where: { $0.lowercased() == lowerCaseWord }) else { return }
-        
+
         triggerWords.append(trimmedWord)
         newTriggerWord = ""
     }
 }
 
-
 struct TriggerWordItemView: View {
     let word: String
     let onDelete: () -> Void
     @State private var isHovered = false
-    
+
     var body: some View {
         HStack(spacing: 6) {
             Text(word)
                 .font(.system(size: 13))
                 .lineLimit(1)
                 .foregroundColor(.primary)
-            
+
             Spacer(minLength: 8)
-            
+
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
                     .symbolRenderingMode(.hierarchical)
@@ -376,16 +375,16 @@ struct TriggerWordItemView: View {
     }
 }
 
-// Icon Picker Popover - shows icons in a grid format without category labels
+/// Icon Picker Popover - shows icons in a grid format without category labels
 struct IconPickerPopover: View {
     @Binding var selectedIcon: PromptIcon
     @Binding var isPresented: Bool
-    
+
     var body: some View {
         let columns = [
-            GridItem(.adaptive(minimum: 45, maximum: 52), spacing: 14)
+            GridItem(.adaptive(minimum: 45, maximum: 52), spacing: 14),
         ]
-        
+
         ScrollView {
             LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(PromptIcon.allCases, id: \.self) { icon in
@@ -403,7 +402,7 @@ struct IconPickerPopover: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(selectedIcon == icon ? Color(NSColor.separatorColor) : Color.secondary.opacity(0.2), lineWidth: selectedIcon == icon ? 2 : 1)
                                 )
-                            
+
                             Image(systemName: icon)
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.primary)

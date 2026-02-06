@@ -1,6 +1,6 @@
 import Foundation
-import SwiftData
 import OSLog
+import SwiftData
 
 class TranscriptionAutoCleanupService {
     static let shared = TranscriptionAutoCleanupService()
@@ -26,7 +26,6 @@ class TranscriptionAutoCleanupService {
         )
 
         if UserDefaults.standard.bool(forKey: keyIsEnabled) {
-            
             Task { [weak self] in
                 guard let self = self, let modelContext = self.modelContext else { return }
                 await self.sweepOldTranscriptions(modelContext: modelContext)
@@ -59,13 +58,15 @@ class TranscriptionAutoCleanupService {
         }
 
         guard let transcription = notification.object as? Transcription,
-              let modelContext = self.modelContext else {
+              let modelContext = modelContext
+        else {
             logger.error("Invalid transcription or missing model context")
             return
         }
 
         if let urlString = transcription.audioFileURL,
-           let url = URL(string: urlString) {
+           let url = URL(string: urlString)
+        {
             do {
                 try FileManager.default.removeItem(at: url)
             } catch {
@@ -105,7 +106,8 @@ class TranscriptionAutoCleanupService {
                     // Remove audio file if present
                     if let urlString = transcription.audioFileURL,
                        let url = URL(string: urlString),
-                       FileManager.default.fileExists(atPath: url.path) {
+                       FileManager.default.fileExists(atPath: url.path)
+                    {
                         try? FileManager.default.removeItem(at: url)
                     }
                     modelContext.delete(transcription)

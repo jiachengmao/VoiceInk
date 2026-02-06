@@ -3,11 +3,11 @@ import SwiftUI
 struct DictionarySettingsView: View {
     @State private var selectedSection: DictionarySection = .replacements
     let whisperPrompt: WhisperPrompt
-    
+
     enum DictionarySection: String, CaseIterable {
         case replacements = "Word Replacements"
         case spellings = "Correct Spellings"
-        
+
         var description: String {
             switch self {
             case .spellings:
@@ -16,7 +16,7 @@ struct DictionarySettingsView: View {
                 return "Automatically replace specific words/phrases with custom formatted text "
             }
         }
-        
+
         var icon: String {
             switch self {
             case .spellings:
@@ -26,7 +26,7 @@ struct DictionarySettingsView: View {
             }
         }
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -37,7 +37,7 @@ struct DictionarySettingsView: View {
         .frame(minWidth: 600, minHeight: 500)
         .background(Color(NSColor.controlBackgroundColor))
     }
-    
+
     private var heroSection: some View {
         VStack(spacing: 24) {
             Image(systemName: "brain.filled.head.profile")
@@ -61,17 +61,17 @@ struct DictionarySettingsView: View {
         .padding(.vertical, 40)
         .frame(maxWidth: .infinity)
     }
-    
+
     private var mainContent: some View {
         VStack(spacing: 40) {
             sectionSelector
-            
+
             selectedSectionContent
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 40)
     }
-    
+
     private var sectionSelector: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
@@ -115,7 +115,7 @@ struct DictionarySettingsView: View {
             }
         }
     }
-    
+
     private var selectedSectionContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             switch selectedSection {
@@ -134,7 +134,7 @@ struct SectionCard: View {
     let section: DictionarySettingsView.DictionarySection
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
@@ -142,11 +142,11 @@ struct SectionCard: View {
                     .font(.system(size: 28))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(isSelected ? .blue : .secondary)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(section.rawValue)
                         .font(.headline)
-                    
+
                     Text(section.description)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -159,4 +159,4 @@ struct SectionCard: View {
         }
         .buttonStyle(.plain)
     }
-} 
+}

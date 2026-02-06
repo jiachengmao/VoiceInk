@@ -1,6 +1,6 @@
-import SwiftUI
-import Combine
 import AppKit
+import Combine
+import SwiftUI
 
 struct ParakeetModelCardRowView: View {
     let model: ParakeetModel
@@ -27,7 +27,7 @@ struct ParakeetModelCardRowView: View {
                 progressSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             actionSection
         }
         .padding(16)
@@ -39,7 +39,7 @@ struct ParakeetModelCardRowView: View {
             Text(model.displayName)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
-            
+
             Text("Experimental")
                 .font(.system(size: 11, weight: .medium))
                 .padding(.horizontal, 6)
@@ -149,15 +149,15 @@ struct ParakeetModelCardRowView: View {
                 .buttonStyle(.plain)
                 .disabled(isDownloading)
             }
-            
+
             if isDownloaded {
                 Menu {
                     Button(action: {
-                         whisperState.deleteParakeetModel(model)
+                        whisperState.deleteParakeetModel(model)
                     }) {
                         Label("Delete Model", systemImage: "trash")
                     }
-                    
+
                     Button {
                         whisperState.showParakeetModelInFinder(model)
                     } label: {

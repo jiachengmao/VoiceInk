@@ -1,21 +1,21 @@
 import SwiftUI
 
-// App Picker Sheet
+/// App Picker Sheet
 struct AppPickerSheet: View {
     let installedApps: [(url: URL, name: String, bundleId: String, icon: NSImage)]
     @Binding var selectedAppConfigs: [AppConfig]
     @Binding var searchText: String
     let onDismiss: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 16) {
             // Header
             HStack {
                 Text("Select Applications")
                     .font(.headline)
-                
+
                 Spacer()
-                
+
                 Button("Done") {
                     onDismiss()
                 }
@@ -23,7 +23,7 @@ struct AppPickerSheet: View {
             }
             .padding(.horizontal)
             .padding(.top)
-            
+
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -39,7 +39,7 @@ struct AppPickerSheet: View {
                 }
             }
             .padding(.horizontal)
-                
+
             // App Grid
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 16)], spacing: 16) {
@@ -47,7 +47,7 @@ struct AppPickerSheet: View {
                         AppGridItem(
                             app: app,
                             isSelected: selectedAppConfigs.contains(where: { $0.bundleIdentifier == app.bundleId }),
-                            action: { 
+                            action: {
                                 toggleAppSelection(app)
                             }
                         )
@@ -58,7 +58,7 @@ struct AppPickerSheet: View {
         }
         .frame(width: 600, height: 500)
     }
-    
+
     private func toggleAppSelection(_ app: (url: URL, name: String, bundleId: String, icon: NSImage)) {
         if let index = selectedAppConfigs.firstIndex(where: { $0.bundleIdentifier == app.bundleId }) {
             selectedAppConfigs.remove(at: index)

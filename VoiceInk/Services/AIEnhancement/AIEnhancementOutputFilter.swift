@@ -1,12 +1,12 @@
 import Foundation
 
-struct AIEnhancementOutputFilter {
+enum AIEnhancementOutputFilter {
     static func filter(_ text: String) -> String {
         var processedText = text
         let patterns = [
             #"(?s)<thinking>(.*?)</thinking>"#,
             #"(?s)<think>(.*?)</think>"#,
-            #"(?s)<reasoning>(.*?)</reasoning>"#
+            #"(?s)<reasoning>(.*?)</reasoning>"#,
         ]
 
         for pattern in patterns {
@@ -15,7 +15,7 @@ struct AIEnhancementOutputFilter {
                 processedText = regex.stringByReplacingMatches(in: processedText, options: [], range: range, withTemplate: "")
             }
         }
-        
+
         return processedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-} 
+}

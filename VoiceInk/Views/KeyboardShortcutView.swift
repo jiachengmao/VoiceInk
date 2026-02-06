@@ -1,10 +1,10 @@
-import SwiftUI
 import KeyboardShortcuts
+import SwiftUI
 
 struct KeyboardShortcutView: View {
     let shortcut: KeyboardShortcuts.Shortcut?
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
         if let shortcut = shortcut {
             HStack(spacing: 6) {
@@ -17,24 +17,24 @@ struct KeyboardShortcutView: View {
                 .foregroundColor(.secondary)
         }
     }
-    
+
     private func shortcutComponents(from shortcut: KeyboardShortcuts.Shortcut) -> [String] {
         var components: [String] = []
-        
+
         // Add modifiers
         if shortcut.modifiers.contains(.command) { components.append("⌘") }
         if shortcut.modifiers.contains(.option) { components.append("⌥") }
         if shortcut.modifiers.contains(.shift) { components.append("⇧") }
         if shortcut.modifiers.contains(.control) { components.append("⌃") }
-        
+
         // Add key
         if let key = shortcut.key {
             components.append(keyToString(key))
         }
-        
+
         return components
     }
-    
+
     private func keyToString(_ key: KeyboardShortcuts.Key) -> String {
         switch key {
         case .space: return "Space"
@@ -105,7 +105,7 @@ struct KeyboardShortcutView: View {
         case .eight: return "8"
         case .nine: return "9"
         default:
-              return String(key.rawValue).uppercased()
+            return String(key.rawValue).uppercased()
         }
     }
 }
@@ -114,37 +114,37 @@ struct KeyCapView: View {
     let text: String
     @Environment(\.colorScheme) private var colorScheme
     @State private var isPressed = false
-    
+
     private var keyColor: Color {
         colorScheme == .dark ? Color(white: 0.2) : .white
     }
-    
+
     private var surfaceGradient: LinearGradient {
         LinearGradient(
             colors: [
                 keyColor,
-                keyColor.opacity(0.2)
+                keyColor.opacity(0.2),
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
-    
+
     private var highlightGradient: LinearGradient {
         LinearGradient(
             colors: [
                 .white.opacity(colorScheme == .dark ? 0.15 : 0.5),
-                .white.opacity(0.0)
+                .white.opacity(0.0),
             ],
             startPoint: .topLeading,
             endPoint: .center
         )
     }
-    
+
     private var shadowColor: Color {
         colorScheme == .dark ? .black : .gray
     }
-    
+
     var body: some View {
         Text(text)
             .font(.system(size: 25, weight: .semibold, design: .rounded))
@@ -160,14 +160,14 @@ struct KeyCapView: View {
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(highlightGradient)
                         )
-                    
+
                     // Border
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
                                     .white.opacity(colorScheme == .dark ? 0.2 : 0.6),
-                                    shadowColor.opacity(0.3)
+                                    shadowColor.opacity(0.3),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -190,7 +190,7 @@ struct KeyCapView: View {
                         LinearGradient(
                             colors: [
                                 shadowColor.opacity(0.0),
-                                shadowColor.opacity(0.9)
+                                shadowColor.opacity(0.9),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -240,4 +240,4 @@ struct KeyCapView: View {
         KeyboardShortcutView(shortcut: nil)
     }
     .padding()
-} 
+}

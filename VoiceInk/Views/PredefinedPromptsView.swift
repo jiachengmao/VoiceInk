@@ -2,9 +2,9 @@ import SwiftUI
 
 struct PredefinedPromptsView: View {
     let onSelect: (TemplatePrompt) -> Void
-    
+
     private let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 18), count: 2)
-    
+
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
@@ -24,7 +24,7 @@ struct PredefinedPromptsView: View {
 struct PredefinedTemplateButton: View {
     let prompt: TemplatePrompt
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
@@ -37,15 +37,15 @@ struct PredefinedTemplateButton: View {
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(Color(NSColor.labelColor))
                         )
-                    
+
                     Text(prompt.title)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
-                    
+
                     Spacer(minLength: 0)
                 }
-                
+
                 Text(prompt.description)
                     .font(.system(size: 12))
                     .foregroundColor(Color(NSColor.secondaryLabelColor))
@@ -63,19 +63,19 @@ struct PredefinedTemplateButton: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(Color(NSColor.controlBackgroundColor))
     }
-    
+
     private var cardStroke: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .stroke(
                 LinearGradient(
                     colors: [
                         Color(NSColor.separatorColor).opacity(0.35),
-                        Color(NSColor.separatorColor).opacity(0.15)
+                        Color(NSColor.separatorColor).opacity(0.15),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing

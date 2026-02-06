@@ -3,33 +3,34 @@ import SwiftUI
 
 @MainActor
 extension WhisperState {
-    // Loads the default transcription model from UserDefaults
+    /// Loads the default transcription model from UserDefaults
     func loadCurrentTranscriptionModel() {
         if let savedModelName = UserDefaults.standard.string(forKey: "CurrentTranscriptionModel"),
-           let savedModel = allAvailableModels.first(where: { $0.name == savedModelName }) {
+           let savedModel = allAvailableModels.first(where: { $0.name == savedModelName })
+        {
             currentTranscriptionModel = savedModel
         }
     }
 
-    // Function to set any transcription model as default
+    /// Function to set any transcription model as default
     func setDefaultTranscriptionModel(_ model: any TranscriptionModel) {
-        self.currentTranscriptionModel = model
+        currentTranscriptionModel = model
         UserDefaults.standard.set(model.name, forKey: "CurrentTranscriptionModel")
-        
+
         // For cloud models, clear the old loadedLocalModel
         if model.provider != .local {
-            self.loadedLocalModel = nil
+            loadedLocalModel = nil
         }
-        
+
         // Enable transcription for cloud models immediately since they don't need loading
         if model.provider != .local {
-            self.isModelLoaded = true
+            isModelLoaded = true
         }
         // Post notification about the model change
         NotificationCenter.default.post(name: .didChangeModel, object: nil, userInfo: ["modelName": model.name])
         NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
     }
-    
+
     func refreshAllAvailableModels() {
         let currentModelName = currentTranscriptionModel?.name
         var models = PredefinedModels.models
@@ -46,8 +47,9 @@ extension WhisperState {
 
         // Preserve current selection by name (IDs may change for dynamic models)
         if let currentName = currentModelName,
-           let updatedModel = allAvailableModels.first(where: { $0.name == currentName }) {
+           let updatedModel = allAvailableModels.first(where: { $0.name == currentName })
+        {
             setDefaultTranscriptionModel(updatedModel)
         }
     }
-} 
+}

@@ -11,4 +11,4 @@ protocol TranscriptionService {
     /// - Returns: The transcribed text as a `String`.
     /// - Throws: An error if the transcription fails.
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String
-} 
+}

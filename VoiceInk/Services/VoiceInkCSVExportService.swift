@@ -1,17 +1,16 @@
 
-import Foundation
 import AppKit
+import Foundation
 import SwiftData
 
 class VoiceInkCSVExportService {
-    
     func exportTranscriptionsToCSV(transcriptions: [Transcription]) {
         let csvString = generateCSV(for: transcriptions)
-        
+
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.commaSeparatedText]
         savePanel.nameFieldStringValue = "VoiceInk-transcription.csv"
-        
+
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
                 do {
@@ -22,7 +21,7 @@ class VoiceInkCSVExportService {
             }
         }
     }
-    
+
     private func generateCSV(for transcriptions: [Transcription]) -> String {
         var csvString = "Original Transcript,Enhanced Transcript,Enhancement Model,Prompt Name,Transcription Model,Power Mode,Enhancement Time,Transcription Time,Timestamp,Duration\n"
 

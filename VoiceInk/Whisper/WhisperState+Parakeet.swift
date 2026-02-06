@@ -1,6 +1,6 @@
-import Foundation
-import FluidAudio
 import AppKit
+import FluidAudio
+import Foundation
 
 extension WhisperState {
     private func parakeetDefaultsKey(for modelName: String) -> String {
@@ -37,7 +37,7 @@ extension WhisperState {
         parakeetDownloadStates[modelName] = true
         downloadProgress[modelName] = 0.0
 
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { timer in
+        let timer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { _ in
             Task { @MainActor in
                 if let currentProgress = self.downloadProgress[modelName], currentProgress < 0.9 {
                     self.downloadProgress[modelName] = currentProgress + 0.005
@@ -69,7 +69,8 @@ extension WhisperState {
     func deleteParakeetModel(_ model: ParakeetModel) {
         if let currentModel = currentTranscriptionModel,
            currentModel.provider == .parakeet,
-           currentModel.name == model.name {
+           currentModel.name == model.name
+        {
             currentTranscriptionModel = nil
             UserDefaults.standard.removeObject(forKey: "CurrentTranscriptionModel")
         }

@@ -1,5 +1,5 @@
-import Foundation
 import AVFoundation
+import Foundation
 import SwiftUI
 
 @MainActor
@@ -30,7 +30,8 @@ class SoundManager: ObservableObject {
     func setupSounds() async {
         if let startSoundURL = Bundle.main.url(forResource: "recstart", withExtension: "mp3"),
            let stopSoundURL = Bundle.main.url(forResource: "recstop", withExtension: "mp3"),
-           let escSoundURL = Bundle.main.url(forResource: "esc", withExtension: "wav") {
+           let escSoundURL = Bundle.main.url(forResource: "esc", withExtension: "wav")
+        {
             try? await loadSounds(start: startSoundURL, stop: stopSoundURL, esc: escSoundURL)
         }
 
@@ -104,13 +105,13 @@ class SoundManager: ObservableObject {
             stopSound?.play()
         }
     }
-    
+
     func playEscSound() {
         guard isSoundFeedbackEnabled else { return }
         escSound?.volume = 0.3
         escSound?.play()
     }
-    
+
     var isEnabled: Bool {
         get { isSoundFeedbackEnabled }
         set {
@@ -118,4 +119,4 @@ class SoundManager: ObservableObject {
             isSoundFeedbackEnabled = newValue
         }
     }
-} 
+}

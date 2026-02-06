@@ -1,6 +1,6 @@
-import Foundation
 import AppKit
 import AVFoundation
+import Foundation
 
 class SystemInfoService {
     static let shared = SystemInfoService()
@@ -8,7 +8,7 @@ class SystemInfoService {
     private init() {}
 
     func getSystemInfoString() -> String {
-        let info = """
+        return """
         === VOICEINK SYSTEM INFORMATION ===
         Generated: \(Date().formatted(date: .long, time: .standard))
 
@@ -47,8 +47,6 @@ class SystemInfoService {
         Screen Recording: \(getScreenRecordingStatus())
         Microphone: \(getMicrophoneStatus())
         """
-
-        return info
     }
 
     func copySystemInfoToClipboard() {
@@ -99,7 +97,8 @@ class SystemInfoService {
 
     private func getAudioInputMode() -> String {
         if let mode = UserDefaults.standard.audioInputModeRawValue,
-           let audioMode = AudioInputMode(rawValue: mode) {
+           let audioMode = AudioInputMode(rawValue: mode)
+        {
             return audioMode.rawValue
         }
         return "System Default"
@@ -108,7 +107,8 @@ class SystemInfoService {
     private func getCurrentAudioDevice() -> String {
         let audioManager = AudioDeviceManager.shared
         if let deviceID = audioManager.selectedDeviceID ?? audioManager.fallbackDeviceID,
-           let deviceName = audioManager.getDeviceName(deviceID: deviceID) {
+           let deviceName = audioManager.getDeviceName(deviceID: deviceID)
+        {
             return deviceName
         }
         return "System Default"
@@ -124,7 +124,8 @@ class SystemInfoService {
 
     private func getPrimaryHotkey() -> String {
         if let hotkeyRaw = UserDefaults.standard.string(forKey: "selectedHotkey1"),
-           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw) {
+           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw)
+        {
             return hotkey.displayName
         }
         return "Right Command"
@@ -132,7 +133,8 @@ class SystemInfoService {
 
     private func getSecondaryHotkey() -> String {
         if let hotkeyRaw = UserDefaults.standard.string(forKey: "selectedHotkey2"),
-           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw) {
+           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw)
+        {
             return hotkey.displayName
         }
         return "None"
@@ -170,6 +172,7 @@ class SystemInfoService {
         }
         return "None selected"
     }
+
     private func getAccessibilityStatus() -> String {
         return AXIsProcessTrusted() ? "Granted" : "Not Granted"
     }
@@ -200,5 +203,4 @@ class SystemInfoService {
     private func getCurrentLanguage() -> String {
         return UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
     }
-
 }

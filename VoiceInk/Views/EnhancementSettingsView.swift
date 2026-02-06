@@ -6,7 +6,7 @@ struct EnhancementSettingsView: View {
     @State private var isEditingPrompt = false
     @State private var isSettingsExpanded = true
     @State private var selectedPromptForEdit: CustomPrompt?
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -19,27 +19,27 @@ struct EnhancementSettingsView: View {
                                 HStack {
                                     Text("Enable Enhancement")
                                         .font(.headline)
-                                    
+
                                     InfoTip(
                                         title: "AI Enhancement",
                                         message: "AI enhancement lets you pass the transcribed audio through LLMS to post-process using different prompts suitable for different use cases like e-mails, summary, writing, etc.",
                                         learnMoreURL: "https://www.youtube.com/@tryvoiceink/videos"
                                     )
                                 }
-                                
+
                                 Text("Turn on AI-powered enhancement features")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            
+
                             Spacer()
-                            
+
                             Toggle("", isOn: $enhancementService.isEnhancementEnabled)
                                 .toggleStyle(SwitchToggleStyle(tint: .blue))
                                 .labelsHidden()
                                 .scaleEffect(1.2)
                         }
-                        
+
                         HStack(spacing: 20) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Toggle("Clipboard Context", isOn: $enhancementService.useClipboardContext)
@@ -49,7 +49,7 @@ struct EnhancementSettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(enhancementService.isEnhancementEnabled ? .secondary : .secondary.opacity(0.5))
                             }
-                            
+
                             VStack(alignment: .leading, spacing: 4) {
                                 Toggle("Context Awareness", isOn: $enhancementService.useScreenCaptureContext)
                                     .toggleStyle(.switch)
@@ -62,22 +62,22 @@ struct EnhancementSettingsView: View {
                     }
                     .padding()
                     .background(CardBackground(isSelected: false))
-                    
+
                     // 1. AI Provider Integration Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("AI Provider Integration")
                             .font(.headline)
-                        
+
                         APIKeyManagementView()
                     }
                     .padding()
                     .background(CardBackground(isSelected: false))
-                    
+
                     // 3. Enhancement Modes & Assistant Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Enhancement Prompt")
                             .font(.headline)
-                        
+
                         // Reorderable prompts grid with drag-and-drop
                         ReorderablePromptGrid(
                             selectedPromptId: enhancementService.selectedPromptId,
@@ -97,7 +97,7 @@ struct EnhancementSettingsView: View {
                     }
                     .padding()
                     .background(CardBackground(isSelected: false))
-                    
+
                     EnhancementShortcutsSection()
                 }
             }
@@ -115,17 +115,18 @@ struct EnhancementSettingsView: View {
 }
 
 // MARK: - Drag & Drop Reorderable Grid
+
 private struct ReorderablePromptGrid: View {
     @EnvironmentObject private var enhancementService: AIEnhancementService
-    
+
     let selectedPromptId: UUID?
     let onPromptSelected: (CustomPrompt) -> Void
     let onEditPrompt: ((CustomPrompt) -> Void)?
     let onDeletePrompt: ((CustomPrompt) -> Void)?
     let onAddNewPrompt: (() -> Void)?
-    
+
     @State private var draggingItem: CustomPrompt?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if enhancementService.customPrompts.isEmpty {
@@ -134,9 +135,9 @@ private struct ReorderablePromptGrid: View {
                     .font(.caption)
             } else {
                 let columns = [
-                    GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 36)
+                    GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 36),
                 ]
-                
+
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(enhancementService.customPrompts) { prompt in
                         prompt.promptIcon(
@@ -155,8 +156,8 @@ private struct ReorderablePromptGrid: View {
                             RoundedRectangle(cornerRadius: 14)
                                 .stroke(
                                     draggingItem != nil && draggingItem?.id != prompt.id
-                                    ? Color.accentColor.opacity(0.25)
-                                    : Color.clear,
+                                        ? Color.accentColor.opacity(0.25)
+                                        : Color.clear,
                                     lineWidth: 1
                                 )
                         )
@@ -174,7 +175,7 @@ private struct ReorderablePromptGrid: View {
                             )
                         )
                     }
-                    
+
                     if let onAddNewPrompt = onAddNewPrompt {
                         CustomPrompt.addNewButton {
                             onAddNewPrompt()
@@ -191,12 +192,12 @@ private struct ReorderablePromptGrid: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                
+
                 HStack {
                     Image(systemName: "info.circle")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Double-click to edit • Right-click for more options")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -209,16 +210,17 @@ private struct ReorderablePromptGrid: View {
 }
 
 // MARK: - Drop Delegates
+
 private struct PromptDropDelegate: DropDelegate {
     let item: CustomPrompt
     @Binding var prompts: [CustomPrompt]
     @Binding var draggingItem: CustomPrompt?
-    
-    func dropEntered(info: DropInfo) {
+
+    func dropEntered(info _: DropInfo) {
         guard let draggingItem = draggingItem, draggingItem != item else { return }
         guard let fromIndex = prompts.firstIndex(of: draggingItem),
               let toIndex = prompts.firstIndex(of: item) else { return }
-        
+
         // Move item as you hover for immediate visual update
         if prompts[toIndex].id != draggingItem.id {
             withAnimation(.easeInOut(duration: 0.12)) {
@@ -228,12 +230,12 @@ private struct PromptDropDelegate: DropDelegate {
             }
         }
     }
-    
-    func dropUpdated(info: DropInfo) -> DropProposal? {
+
+    func dropUpdated(info _: DropInfo) -> DropProposal? {
         DropProposal(operation: .move)
     }
-    
-    func performDrop(info: DropInfo) -> Bool {
+
+    func performDrop(info _: DropInfo) -> Bool {
         draggingItem = nil
         return true
     }
@@ -242,17 +244,23 @@ private struct PromptDropDelegate: DropDelegate {
 private struct PromptEndDropDelegate: DropDelegate {
     @Binding var prompts: [CustomPrompt]
     @Binding var draggingItem: CustomPrompt?
-    
-    func validateDrop(info: DropInfo) -> Bool { true }
-    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
-    
-    func performDrop(info: DropInfo) -> Bool {
+
+    func validateDrop(info _: DropInfo) -> Bool {
+        true
+    }
+
+    func dropUpdated(info _: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info _: DropInfo) -> Bool {
         guard let draggingItem = draggingItem,
-              let currentIndex = prompts.firstIndex(of: draggingItem) else {
+              let currentIndex = prompts.firstIndex(of: draggingItem)
+        else {
             self.draggingItem = nil
             return false
         }
-        
+
         // Move to end if dropped on the trailing "Add New" tile
         withAnimation(.easeInOut(duration: 0.12)) {
             prompts.move(fromOffsets: IndexSet(integer: currentIndex), toOffset: prompts.endIndex)

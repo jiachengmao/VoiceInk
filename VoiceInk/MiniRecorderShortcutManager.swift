@@ -1,6 +1,6 @@
+import AppKit
 import Foundation
 import KeyboardShortcuts
-import AppKit
 
 extension KeyboardShortcuts.Name {
     static let escapeRecorder = Self("escapeRecorder")
@@ -34,15 +34,15 @@ extension KeyboardShortcuts.Name {
 class MiniRecorderShortcutManager: ObservableObject {
     private var whisperState: WhisperState
     private var visibilityTask: Task<Void, Never>?
-    
+
     private var isCancelHandlerSetup = false
-    
+
     // Double-tap Escape handling
-    private var escFirstPressTime: Date? = nil
+    private var escFirstPressTime: Date?
     private let escSecondPressThreshold: TimeInterval = 1.5
     private var isEscapeHandlerSetup = false
     private var escapeTimeoutTask: Task<Void, Never>?
-    
+
     init(whisperState: WhisperState) {
         self.whisperState = whisperState
         setupVisibilityObserver()
@@ -52,7 +52,7 @@ class MiniRecorderShortcutManager: ObservableObject {
 
         NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange), name: .AppSettingsDidChange, object: nil)
     }
-    
+
     @objc private func settingsDidChange() {
         Task {
             if await whisperState.isMiniRecorderVisible {
@@ -88,23 +88,24 @@ class MiniRecorderShortcutManager: ObservableObject {
             }
         }
     }
-    
-    // Setup escape handler once
+
+    /// Setup escape handler once
     private func setupEscapeHandlerOnce() {
         guard !isEscapeHandlerSetup else { return }
         isEscapeHandlerSetup = true
-        
+
         KeyboardShortcuts.onKeyDown(for: .escapeRecorder) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
-                
+
                 // Don't process if custom shortcut is configured
                 guard KeyboardShortcuts.getShortcut(for: .cancelRecorder) == nil else { return }
-                
+
                 let now = Date()
                 if let firstTime = self.escFirstPressTime,
-                   now.timeIntervalSince(firstTime) <= self.escSecondPressThreshold {
+                   now.timeIntervalSince(firstTime) <= self.escSecondPressThreshold
+                {
                     self.escFirstPressTime = nil
                     await self.whisperState.cancelRecording()
                 } else {
@@ -125,18 +126,18 @@ class MiniRecorderShortcutManager: ObservableObject {
             }
         }
     }
-    
+
     private func activateEscapeShortcut() {
         // Don't activate if custom shortcut is configured
         guard KeyboardShortcuts.getShortcut(for: .cancelRecorder) == nil else { return }
         KeyboardShortcuts.setShortcut(.init(.escape), for: .escapeRecorder)
     }
-    
-    // Setup cancel handler once
+
+    /// Setup cancel handler once
     private func setupCancelHandlerOnce() {
         guard !isCancelHandlerSetup else { return }
         isCancelHandlerSetup = true
-        
+
         KeyboardShortcuts.onKeyDown(for: .cancelRecorder) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
@@ -147,22 +148,22 @@ class MiniRecorderShortcutManager: ObservableObject {
             }
         }
     }
-    
+
     private func activateCancelShortcut() {
         // Handler checks if shortcut exists
     }
-    
+
     private func deactivateEscapeShortcut() {
         KeyboardShortcuts.setShortcut(nil, for: .escapeRecorder)
         escFirstPressTime = nil
         escapeTimeoutTask?.cancel()
         escapeTimeoutTask = nil
     }
-    
+
     private func deactivateCancelShortcut() {
         // Shortcut managed by user settings
     }
-    
+
     private func setupEnhancementShortcut() {
         KeyboardShortcuts.onKeyDown(for: .toggleEnhancement) { [weak self] in
             Task { @MainActor in
@@ -173,7 +174,7 @@ class MiniRecorderShortcutManager: ObservableObject {
             }
         }
     }
-    
+
     private func setupPowerModeShortcuts() {
         KeyboardShortcuts.setShortcut(.init(.one, modifiers: .option), for: .selectPowerMode1)
         KeyboardShortcuts.setShortcut(.init(.two, modifiers: .option), for: .selectPowerMode2)
@@ -185,7 +186,7 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.setShortcut(.init(.eight, modifiers: .option), for: .selectPowerMode8)
         KeyboardShortcuts.setShortcut(.init(.nine, modifiers: .option), for: .selectPowerMode9)
         KeyboardShortcuts.setShortcut(.init(.zero, modifiers: .option), for: .selectPowerMode10)
-        
+
         // Setup handlers
         setupPowerModeHandler(for: .selectPowerMode1, index: 0)
         setupPowerModeHandler(for: .selectPowerMode2, index: 1)
@@ -198,15 +199,15 @@ class MiniRecorderShortcutManager: ObservableObject {
         setupPowerModeHandler(for: .selectPowerMode9, index: 8)
         setupPowerModeHandler(for: .selectPowerMode10, index: 9)
     }
-    
+
     private func setupPowerModeHandler(for shortcutName: KeyboardShortcuts.Name, index: Int) {
         KeyboardShortcuts.onKeyDown(for: shortcutName) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
-                
+
                 let powerModeManager = PowerModeManager.shared
-                
+
                 if !powerModeManager.enabledConfigurations.isEmpty {
                     let availableConfigurations = powerModeManager.enabledConfigurations
                     if index < availableConfigurations.count {
@@ -218,7 +219,7 @@ class MiniRecorderShortcutManager: ObservableObject {
             }
         }
     }
-    
+
     private func removePowerModeShortcuts() {
         KeyboardShortcuts.setShortcut(nil, for: .selectPowerMode1)
         KeyboardShortcuts.setShortcut(nil, for: .selectPowerMode2)
@@ -231,7 +232,7 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.setShortcut(nil, for: .selectPowerMode9)
         KeyboardShortcuts.setShortcut(nil, for: .selectPowerMode10)
     }
-    
+
     private func setupPromptShortcuts() {
         KeyboardShortcuts.setShortcut(.init(.one, modifiers: .command), for: .selectPrompt1)
         KeyboardShortcuts.setShortcut(.init(.two, modifiers: .command), for: .selectPrompt2)
@@ -243,7 +244,7 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.setShortcut(.init(.eight, modifiers: .command), for: .selectPrompt8)
         KeyboardShortcuts.setShortcut(.init(.nine, modifiers: .command), for: .selectPrompt9)
         KeyboardShortcuts.setShortcut(.init(.zero, modifiers: .command), for: .selectPrompt10)
-        
+
         // Setup handlers
         setupPromptHandler(for: .selectPrompt1, index: 0)
         setupPromptHandler(for: .selectPrompt2, index: 1)
@@ -256,27 +257,27 @@ class MiniRecorderShortcutManager: ObservableObject {
         setupPromptHandler(for: .selectPrompt9, index: 8)
         setupPromptHandler(for: .selectPrompt10, index: 9)
     }
-    
+
     private func setupPromptHandler(for shortcutName: KeyboardShortcuts.Name, index: Int) {
         KeyboardShortcuts.onKeyDown(for: shortcutName) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
-                
+
                 guard let enhancementService = await self.whisperState.getEnhancementService() else { return }
-                
+
                 let availablePrompts = enhancementService.allPrompts
                 if index < availablePrompts.count {
                     if !enhancementService.isEnhancementEnabled {
                         enhancementService.isEnhancementEnabled = true
                     }
-                    
+
                     enhancementService.setActivePrompt(availablePrompts[index])
                 }
             }
         }
     }
-    
+
     private func removePromptShortcuts() {
         KeyboardShortcuts.setShortcut(nil, for: .selectPrompt1)
         KeyboardShortcuts.setShortcut(nil, for: .selectPrompt2)
@@ -289,11 +290,11 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.setShortcut(nil, for: .selectPrompt9)
         KeyboardShortcuts.setShortcut(nil, for: .selectPrompt10)
     }
-    
+
     private func removeEnhancementShortcut() {
         KeyboardShortcuts.setShortcut(nil, for: .toggleEnhancement)
     }
-    
+
     deinit {
         visibilityTask?.cancel()
         NotificationCenter.default.removeObserver(self)
@@ -304,4 +305,4 @@ class MiniRecorderShortcutManager: ObservableObject {
             removePowerModeShortcuts()
         }
     }
-} 
+}

@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import AppKit
+import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 enum ModelFilter: String, CaseIterable, Identifiable {
@@ -8,7 +8,9 @@ enum ModelFilter: String, CaseIterable, Identifiable {
     case local = "Local"
     case cloud = "Cloud"
     case custom = "Custom"
-    var id: String { self.rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
 struct ModelManagementView: View {
@@ -23,7 +25,7 @@ struct ModelManagementView: View {
 
     @State private var selectedFilter: ModelFilter = .recommended
     @State private var isShowingSettings = false
-    
+
     // State for the unified alert
     @State private var isShowingDeleteAlert = false
     @State private var alertTitle = ""
@@ -50,7 +52,7 @@ struct ModelManagementView: View {
             )
         }
     }
-    
+
     private var defaultModelSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Default Model")
@@ -65,11 +67,11 @@ struct ModelManagementView: View {
         .background(CardBackground(isSelected: false))
         .cornerRadius(10)
     }
-    
+
     private var languageSelectionSection: some View {
         LanguageSelectionView(whisperState: whisperState, displayMode: .full, whisperPrompt: whisperPrompt)
     }
-    
+
     private var availableModelsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -94,9 +96,9 @@ struct ModelManagementView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isShowingSettings.toggle()
@@ -113,7 +115,7 @@ struct ModelManagementView: View {
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.bottom, 12)
-            
+
             if isShowingSettings {
                 ModelSettingsView(whisperPrompt: whisperPrompt)
             } else {
@@ -125,7 +127,7 @@ struct ModelManagementView: View {
 
                         ModelCardRowView(
                             model: model,
-                            whisperState: whisperState, 
+                            whisperState: whisperState,
                             isDownloaded: whisperState.availableModels.contains { $0.name == model.name },
                             isCurrent: whisperState.currentTranscriptionModel?.name == model.name,
                             downloadProgress: whisperState.downloadProgress,
@@ -166,7 +168,7 @@ struct ModelManagementView: View {
                             } : nil
                         )
                     }
-                    
+
                     // Import button as a card at the end of the Local list
                     if selectedFilter == .local {
                         HStack(spacing: 8) {
@@ -191,7 +193,7 @@ struct ModelManagementView: View {
                             .help("Read more about custom local models")
                         }
                     }
-                    
+
                     if selectedFilter == .custom {
                         // Add Custom Model Card at the bottom
                         AddCustomModelCardView(
@@ -232,6 +234,7 @@ struct ModelManagementView: View {
     }
 
     // MARK: - Import Panel
+
     private func presentImportPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.init(filenameExtension: "bin")!]

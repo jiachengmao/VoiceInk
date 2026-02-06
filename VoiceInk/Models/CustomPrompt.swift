@@ -9,36 +9,36 @@ extension PromptIcon {
         "doc.text.fill",
         "textbox",
         "checkmark.seal.fill",
-        
+
         // Communication
         "bubble.left.and.bubble.right.fill",
         "message.fill",
         "envelope.fill",
-        
+
         // Professional
         "person.2.fill",
         "person.wave.2.fill",
         "briefcase.fill",
-        
+
         // Technical
         "curlybraces",
         "terminal.fill",
         "gearshape.fill",
-        
+
         // Content
         "doc.text.image.fill",
         "note",
         "book.fill",
         "bookmark.fill",
         "pencil.circle.fill",
-        
+
         // Media & Creative
         "video.fill",
         "mic.fill",
         "music.note",
         "photo.fill",
         "paintbrush.fill",
-        
+
         // Productivity & Time
         "clock.fill",
         "calendar",
@@ -71,7 +71,7 @@ extension PromptIcon {
         "airplane",
         "leaf.fill",
         "hand.raised.fill",
-        "hand.thumbsup.fill"
+        "hand.thumbsup.fill",
     ]
 }
 
@@ -85,7 +85,7 @@ struct CustomPrompt: Identifiable, Codable, Equatable {
     let isPredefined: Bool
     let triggerWords: [String]
     let useSystemInstructions: Bool
-    
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -124,17 +124,18 @@ struct CustomPrompt: Identifiable, Codable, Equatable {
         triggerWords = try container.decode([String].self, forKey: .triggerWords)
         useSystemInstructions = try container.decodeIfPresent(Bool.self, forKey: .useSystemInstructions) ?? true
     }
-    
+
     var finalPromptText: String {
         if useSystemInstructions {
-            return String(format: AIPrompts.customPromptTemplate, self.promptText)
+            return String(format: AIPrompts.customPromptTemplate, promptText)
         } else {
-            return self.promptText
+            return promptText
         }
     }
 }
 
 // MARK: - UI Extensions
+
 extension CustomPrompt {
     func promptIcon(isSelected: Bool, onTap: @escaping () -> Void, onEdit: ((CustomPrompt) -> Void)? = nil, onDelete: ((CustomPrompt) -> Void)? = nil) -> some View {
         VStack(spacing: 8) {
@@ -146,11 +147,11 @@ extension CustomPrompt {
                             gradient: isSelected ?
                                 Gradient(colors: [
                                     Color.accentColor.opacity(0.9),
-                                    Color.accentColor.opacity(0.7)
+                                    Color.accentColor.opacity(0.7),
                                 ]) :
                                 Gradient(colors: [
                                     Color(NSColor.controlBackgroundColor).opacity(0.95),
-                                    Color(NSColor.controlBackgroundColor).opacity(0.85)
+                                    Color(NSColor.controlBackgroundColor).opacity(0.85),
                                 ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -164,7 +165,7 @@ extension CustomPrompt {
                                         isSelected ?
                                             Color.white.opacity(0.3) : Color.white.opacity(0.15),
                                         isSelected ?
-                                            Color.white.opacity(0.1) : Color.white.opacity(0.05)
+                                            Color.white.opacity(0.1) : Color.white.opacity(0.05),
                                     ]),
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -179,7 +180,7 @@ extension CustomPrompt {
                         x: 0,
                         y: 3
                     )
-                
+
                 // Decorative background elements
                 Circle()
                     .fill(
@@ -187,7 +188,7 @@ extension CustomPrompt {
                             gradient: Gradient(colors: [
                                 isSelected ?
                                     Color.white.opacity(0.15) : Color.white.opacity(0.08),
-                                Color.clear
+                                Color.clear,
                             ]),
                             center: .center,
                             startRadius: 1,
@@ -197,7 +198,7 @@ extension CustomPrompt {
                     .frame(width: 50, height: 50)
                     .offset(x: -15, y: -15)
                     .blur(radius: 2)
-                
+
                 // Icon with enhanced effects
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
@@ -222,7 +223,7 @@ extension CustomPrompt {
                     )
             }
             .frame(width: 48, height: 48)
-            
+
             // Enhanced title styling
             VStack(spacing: 2) {
                 Text(title)
@@ -231,7 +232,7 @@ extension CustomPrompt {
                         .primary : .secondary)
                     .lineLimit(1)
                     .frame(maxWidth: 70)
-                
+
                 // Trigger word section with consistent height
                 ZStack(alignment: .center) {
                     if !triggerWords.isEmpty {
@@ -239,7 +240,7 @@ extension CustomPrompt {
                             Image(systemName: "mic.fill")
                                 .font(.system(size: 7))
                                 .foregroundColor(isSelected ? .accentColor.opacity(0.9) : .secondary.opacity(0.7))
-                            
+
                             if triggerWords.count == 1 {
                                 Text("\"\(triggerWords[0])...\"")
                                     .font(.system(size: 8, weight: .regular))
@@ -281,7 +282,7 @@ extension CustomPrompt {
                         Label("Edit", systemImage: "pencil")
                     }
                 }
-                
+
                 if let onDelete = onDelete, !isPredefined {
                     Button(role: .destructive) {
                         let alert = NSAlert()
@@ -290,7 +291,7 @@ extension CustomPrompt {
                         alert.alertStyle = .warning
                         alert.addButton(withTitle: "Delete")
                         alert.addButton(withTitle: "Cancel")
-                        
+
                         let response = alert.runModal()
                         if response == .alertFirstButtonReturn {
                             onDelete(self)
@@ -302,8 +303,8 @@ extension CustomPrompt {
             }
         }
     }
-    
-    // Static method to create an "Add New" button with the same styling as the prompt icons
+
+    /// Static method to create an "Add New" button with the same styling as the prompt icons
     static func addNewButton(action: @escaping () -> Void) -> some View {
         VStack(spacing: 8) {
             ZStack {
@@ -313,7 +314,7 @@ extension CustomPrompt {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.controlBackgroundColor).opacity(0.95),
-                                Color(NSColor.controlBackgroundColor).opacity(0.85)
+                                Color(NSColor.controlBackgroundColor).opacity(0.85),
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -325,7 +326,7 @@ extension CustomPrompt {
                                 LinearGradient(
                                     gradient: Gradient(colors: [
                                         Color.white.opacity(0.15),
-                                        Color.white.opacity(0.05)
+                                        Color.white.opacity(0.05),
                                     ]),
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -339,14 +340,14 @@ extension CustomPrompt {
                         x: 0,
                         y: 3
                     )
-                
+
                 // Decorative background elements (same as in promptIcon)
                 Circle()
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
                                 Color.white.opacity(0.08),
-                                Color.clear
+                                Color.clear,
                             ]),
                             center: .center,
                             startRadius: 1,
@@ -356,7 +357,7 @@ extension CustomPrompt {
                     .frame(width: 50, height: 50)
                     .offset(x: -15, y: -15)
                     .blur(radius: 2)
-                
+
                 // Plus icon with same styling as the normal icons
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 20, weight: .medium))
@@ -369,7 +370,7 @@ extension CustomPrompt {
                     )
             }
             .frame(width: 48, height: 48)
-            
+
             // Text label with matching styling
             VStack(spacing: 2) {
                 Text("Add New")
@@ -377,7 +378,7 @@ extension CustomPrompt {
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                     .frame(maxWidth: 70)
-                
+
                 // Empty space matching the trigger word area height
                 Spacer()
                     .frame(height: 16)

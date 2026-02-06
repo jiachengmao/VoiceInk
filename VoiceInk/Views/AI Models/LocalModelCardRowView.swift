@@ -1,6 +1,8 @@
-import SwiftUI
 import AppKit
+import SwiftUI
+
 // MARK: - Local Model Card View
+
 struct LocalModelCardView: View {
     let model: LocalModel
     let isDownloaded: Bool
@@ -8,16 +10,16 @@ struct LocalModelCardView: View {
     let downloadProgress: [String: Double]
     let modelURL: URL?
     let isWarming: Bool
-    
+
     // Actions
     var deleteAction: () -> Void
     var setDefaultAction: () -> Void
     var downloadAction: () -> Void
     private var isDownloading: Bool {
-        downloadProgress.keys.contains(model.name + "_main") || 
-        downloadProgress.keys.contains(model.name + "_coreml")
+        downloadProgress.keys.contains(model.name + "_main") ||
+            downloadProgress.keys.contains(model.name + "_coreml")
     }
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Main Content
@@ -28,26 +30,26 @@ struct LocalModelCardView: View {
                 progressSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             // Action Controls
             actionSection
         }
         .padding(16)
         .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
     }
-    
+
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
-            
+
             statusBadge
-            
+
             Spacer()
         }
     }
-    
+
     private var statusBadge: some View {
         Group {
             if isCurrent {
@@ -67,7 +69,7 @@ struct LocalModelCardView: View {
             }
         }
     }
-    
+
     private var metadataSection: some View {
         HStack(spacing: 12) {
             // Language
@@ -75,13 +77,13 @@ struct LocalModelCardView: View {
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
-            
+
             // Size
             Label(model.size, systemImage: "internaldrive")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
-            
+
             // Speed
             HStack(spacing: 3) {
                 Text("Speed")
@@ -91,7 +93,7 @@ struct LocalModelCardView: View {
             }
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
-            
+
             // Accuracy
             HStack(spacing: 3) {
                 Text("Accuracy")
@@ -104,7 +106,7 @@ struct LocalModelCardView: View {
         }
         .lineLimit(1)
     }
-    
+
     private var descriptionSection: some View {
         Text(model.description)
             .font(.system(size: 11))
@@ -113,7 +115,7 @@ struct LocalModelCardView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 4)
     }
-    
+
     private var progressSection: some View {
         Group {
             if isDownloading {
@@ -126,7 +128,7 @@ struct LocalModelCardView: View {
             }
         }
     }
-    
+
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
@@ -170,13 +172,13 @@ struct LocalModelCardView: View {
                 .buttonStyle(.plain)
                 .disabled(isDownloading)
             }
-            
+
             if isDownloaded {
                 Menu {
                     Button(action: deleteAction) {
                         Label("Delete Model", systemImage: "trash")
                     }
-                    
+
                     Button {
                         if let modelURL = modelURL {
                             NSWorkspace.shared.selectFile(modelURL.path, inFileViewerRootedAtPath: "")
@@ -197,6 +199,7 @@ struct LocalModelCardView: View {
 }
 
 // MARK: - Imported Local Model (minimal UI)
+
 struct ImportedLocalModelCardView: View {
     let model: ImportedLocalModel
     let isDownloaded: Bool
@@ -281,7 +284,6 @@ struct ImportedLocalModelCardView: View {
     }
 }
 
-
 // MARK: - Helper Views and Functions
 
 func progressDotsWithNumber(value: Double) -> some View {
@@ -295,7 +297,7 @@ func progressDotsWithNumber(value: Double) -> some View {
 
 func progressDots(value: Double) -> some View {
     HStack(spacing: 2) {
-        ForEach(0..<5) { index in
+        ForEach(0 ..< 5) { index in
             Circle()
                 .fill(index < Int(value / 2) ? performanceColor(value: value / 10) : Color(.quaternaryLabelColor))
                 .frame(width: 6, height: 6)
@@ -305,9 +307,9 @@ func progressDots(value: Double) -> some View {
 
 func performanceColor(value: Double) -> Color {
     switch value {
-    case 0.8...1.0: return Color(.systemGreen)
-    case 0.6..<0.8: return Color(.systemYellow)
-    case 0.4..<0.6: return Color(.systemOrange)
+    case 0.8 ... 1.0: return Color(.systemGreen)
+    case 0.6 ..< 0.8: return Color(.systemYellow)
+    case 0.4 ..< 0.6: return Color(.systemOrange)
     default: return Color(.systemRed)
     }
 }

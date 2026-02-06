@@ -1,8 +1,8 @@
-import Foundation
 import AppKit
-import UniformTypeIdentifiers
+import Foundation
 import KeyboardShortcuts
 import LaunchAtLogin
+import UniformTypeIdentifiers
 
 struct GeneralSettings: Codable {
     let toggleMiniRecorderShortcut: KeyboardShortcuts.Shortcut?
@@ -43,7 +43,6 @@ class ImportExportService {
     private let dictionaryItemsKey = "CustomVocabularyItems"
     private let wordReplacementsKey = "wordReplacements"
 
-
     private let keyIsMenuBarOnly = "IsMenuBarOnly"
     private let keyUseAppleScriptPaste = "UseAppleScriptPaste"
     private let keyRecorderType = "RecorderType"
@@ -58,27 +57,28 @@ class ImportExportService {
 
     private init() {
         if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
-            self.currentSettingsVersion = version
+            currentSettingsVersion = version
         } else {
-            self.currentSettingsVersion = "0.0.0"
+            currentSettingsVersion = "0.0.0"
         }
     }
 
     @MainActor
-    func exportSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
+    func exportSettings(enhancementService: AIEnhancementService, whisperPrompt _: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
         let powerModeManager = PowerModeManager.shared
         let emojiManager = EmojiManager.shared
 
         let exportablePrompts = enhancementService.customPrompts.filter { !$0.isPredefined }
 
         let powerConfigs = powerModeManager.configurations
-        
+
         // Export custom models
         let customModels = CustomModelManager.shared.customModels
 
         var exportedDictionaryItems: [DictionaryItem]? = nil
         if let data = UserDefaults.standard.data(forKey: dictionaryItemsKey),
-           let items = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
+           let items = try? JSONDecoder().decode([DictionaryItem].self, from: data)
+        {
             exportedDictionaryItems = items
         }
 
@@ -144,12 +144,12 @@ class ImportExportService {
                 }
             }
         } catch {
-            self.showAlert(title: "Export Error", message: "Could not encode settings to JSON: \(error.localizedDescription)")
+            showAlert(title: "Export Error", message: "Could not encode settings to JSON: \(error.localizedDescription)")
         }
     }
 
     @MainActor
-    func importSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
+    func importSettings(enhancementService: AIEnhancementService, whisperPrompt _: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
         let openPanel = NSOpenPanel()
         openPanel.allowedContentTypes = [UTType.json]
         openPanel.canChooseFiles = true
@@ -169,14 +169,14 @@ class ImportExportService {
                     let jsonData = try Data(contentsOf: url)
                     let decoder = JSONDecoder()
                     let importedSettings = try decoder.decode(VoiceInkExportedSettings.self, from: jsonData)
-                    
+
                     if importedSettings.version != self.currentSettingsVersion {
                         self.showAlert(title: "Version Mismatch", message: "The imported settings file (version \(importedSettings.version)) is from a different version than your application (version \(self.currentSettingsVersion)). Proceeding with import, but be aware of potential incompatibilities.")
                     }
 
                     let predefinedPrompts = enhancementService.customPrompts.filter { $0.isPredefined }
                     enhancementService.customPrompts = predefinedPrompts + importedSettings.customPrompts
-                    
+
                     let powerModeManager = PowerModeManager.shared
                     powerModeManager.configurations = importedSettings.powerModeConfigs
                     powerModeManager.saveConfigurations()
@@ -224,11 +224,13 @@ class ImportExportService {
                             KeyboardShortcuts.setShortcut(retryShortcut, for: .retryLastTranscription)
                         }
                         if let hotkeyRaw = general.selectedHotkey1RawValue,
-                           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw) {
+                           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw)
+                        {
                             hotkeyManager.selectedHotkey1 = hotkey
                         }
                         if let hotkeyRaw2 = general.selectedHotkey2RawValue,
-                           let hotkey2 = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw2) {
+                           let hotkey2 = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw2)
+                        {
                             hotkeyManager.selectedHotkey2 = hotkey2
                         }
                         if let launch = general.launchAtLoginEnabled {
@@ -243,7 +245,7 @@ class ImportExportService {
                         if let recType = general.recorderType {
                             whisperState.recorderType = recType
                         }
-                        
+
                         if let transcriptionCleanup = general.isTranscriptionCleanupEnabled {
                             UserDefaults.standard.set(transcriptionCleanup, forKey: self.keyIsTranscriptionCleanupEnabled)
                         }
@@ -307,7 +309,7 @@ class ImportExportService {
             alert.alertStyle = .informational
             alert.addButton(withTitle: "OK")
             alert.addButton(withTitle: "Configure API Keys")
-            
+
             let response = alert.runModal()
             if response == .alertSecondButtonReturn {
                 NotificationCenter.default.post(

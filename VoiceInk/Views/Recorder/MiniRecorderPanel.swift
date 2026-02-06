@@ -1,10 +1,15 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 class MiniRecorderPanel: NSPanel {
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
-    
+    override var canBecomeKey: Bool {
+        false
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
+
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
@@ -14,7 +19,7 @@ class MiniRecorderPanel: NSPanel {
         )
         configurePanel()
     }
-    
+
     private func configurePanel() {
         isFloatingPanel = true
         level = .floating
@@ -29,7 +34,7 @@ class MiniRecorderPanel: NSPanel {
         titleVisibility = .hidden
         standardWindowButton(.closeButton)?.isHidden = true
     }
-    
+
     static func calculateWindowMetrics() -> NSRect {
         guard let screen = NSScreen.main else {
             return NSRect(x: 0, y: 0, width: 184, height: 40)
@@ -51,14 +56,14 @@ class MiniRecorderPanel: NSPanel {
             height: height
         )
     }
-    
+
     func show() {
         let metrics = MiniRecorderPanel.calculateWindowMetrics()
         setFrame(metrics, display: true)
         orderFrontRegardless()
     }
-    
+
     func hide(completion: @escaping () -> Void) {
         completion()
     }
-} 
+}

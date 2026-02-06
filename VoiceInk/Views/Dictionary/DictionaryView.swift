@@ -3,7 +3,9 @@ import SwiftUI
 struct DictionaryItem: Identifiable, Hashable, Codable {
     var word: String
 
-    var id: String { word }
+    var id: String {
+        word
+    }
 
     init(word: String) {
         self.word = word
@@ -28,20 +30,20 @@ struct DictionaryItem: Identifiable, Hashable, Codable {
 }
 
 enum DictionarySortMode: String {
-    case wordAsc = "wordAsc"
-    case wordDesc = "wordDesc"
+    case wordAsc
+    case wordDesc
 }
 
 class DictionaryManager: ObservableObject {
     @Published var items: [DictionaryItem] = []
     private let saveKey = "CustomVocabularyItems"
     private let whisperPrompt: WhisperPrompt
-    
+
     init(whisperPrompt: WhisperPrompt) {
         self.whisperPrompt = whisperPrompt
         loadItems()
     }
-    
+
     private func loadItems() {
         guard let data = UserDefaults.standard.data(forKey: saveKey) else { return }
 
@@ -49,29 +51,29 @@ class DictionaryManager: ObservableObject {
             items = savedItems
         }
     }
-    
+
     private func saveItems() {
         if let encoded = try? JSONEncoder().encode(items) {
             UserDefaults.standard.set(encoded, forKey: saveKey)
         }
     }
-    
+
     func addWord(_ word: String) {
         let normalizedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !items.contains(where: { $0.word.lowercased() == normalizedWord.lowercased() }) else {
             return
         }
-        
+
         let newItem = DictionaryItem(word: normalizedWord)
         items.insert(newItem, at: 0)
         saveItems()
     }
-    
+
     func removeWord(_ word: String) {
         items.removeAll(where: { $0.word == word })
         saveItems()
     }
-    
+
     var allWords: [String] {
         items.map { $0.word }
     }
@@ -90,7 +92,8 @@ struct DictionaryView: View {
         _dictionaryManager = StateObject(wrappedValue: DictionaryManager(whisperPrompt: whisperPrompt))
 
         if let savedSort = UserDefaults.standard.string(forKey: "dictionarySortMode"),
-           let mode = DictionarySortMode(rawValue: savedSort) {
+           let mode = DictionarySortMode(rawValue: savedSort)
+        {
             _sortMode = State(initialValue: mode)
         }
     }
@@ -178,18 +181,18 @@ struct DictionaryView: View {
             Text(alertMessage)
         }
     }
-    
+
     private func addWords() {
         let input = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return }
-        
+
         let parts = input
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        
+
         guard !parts.isEmpty else { return }
-        
+
         if parts.count == 1, let word = parts.first {
             if dictionaryManager.items.contains(where: { $0.word.lowercased() == word.lowercased() }) {
                 alertMessage = "'\(word)' is already in the dictionary"
@@ -200,7 +203,7 @@ struct DictionaryView: View {
             newWord = ""
             return
         }
-        
+
         for word in parts {
             let lower = word.lowercased()
             if !dictionaryManager.items.contains(where: { $0.word.lowercased() == lower }) {
@@ -251,4 +254,4 @@ struct DictionaryItemView: View {
         }
         .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
     }
-} 
+}

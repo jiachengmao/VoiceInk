@@ -19,7 +19,6 @@ struct CustomSoundSettingsView: View {
         }
     }
 
-    @ViewBuilder
     private func soundRow(for type: CustomSoundManager.SoundType) -> some View {
         horizontalSoundRow(
             title: type.rawValue.capitalized,
@@ -37,7 +36,6 @@ struct CustomSoundSettingsView: View {
         )
     }
 
-    @ViewBuilder
     private func horizontalSoundRow(
         title: String,
         fileName: String?,
@@ -120,7 +118,7 @@ struct CustomSoundSettingsView: View {
             UTType.audio,
             UTType.mp3,
             UTType.wav,
-            UTType.aiff
+            UTType.aiff,
         ]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -129,7 +127,7 @@ struct CustomSoundSettingsView: View {
             guard response == .OK, let url = panel.url else { return }
 
             let result = customSoundManager.setCustomSound(url: url, for: type)
-            if case .failure(let error) = result {
+            if case let .failure(error) = result {
                 alertTitle = "Invalid Audio File"
                 alertMessage = error.localizedDescription
                 showingAlert = true

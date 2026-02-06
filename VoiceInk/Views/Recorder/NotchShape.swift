@@ -8,22 +8,22 @@ struct NotchShape: Shape {
             5
         }
     }
-    
+
     var bottomCornerRadius: CGFloat
-    
+
     init(cornerRadius: CGFloat? = nil) {
         if cornerRadius == nil {
-            self.bottomCornerRadius = 10
+            bottomCornerRadius = 10
         } else {
-            self.bottomCornerRadius = cornerRadius!
+            bottomCornerRadius = cornerRadius!
         }
     }
-    
+
     var animatableData: CGFloat {
         get { bottomCornerRadius }
         set { bottomCornerRadius = newValue }
     }
-    
+
     func path(in rect: CGRect) -> Path {
         var path = Path()
         // Start from the top left corner
@@ -47,7 +47,7 @@ struct NotchShape: Shape {
             control: CGPoint(x: rect.maxX - topCornerRadius, y: rect.maxY)
         )
         path.addLine(to: CGPoint(x: rect.maxX - topCornerRadius, y: rect.minY + bottomCornerRadius))
-        
+
         // Closing the path to top right inner curve
         path.addQuadCurve(
             to: CGPoint(x: rect.maxX, y: rect.minY),
@@ -56,4 +56,4 @@ struct NotchShape: Shape {
         path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
         return path
     }
-} 
+}

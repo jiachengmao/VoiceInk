@@ -6,12 +6,12 @@ struct PerformanceAnalysisView: View {
     private let analysis: AnalysisResult
 
     private let columns: [GridItem] = [
-        GridItem(.adaptive(minimum: 250), spacing: 16)
+        GridItem(.adaptive(minimum: 250), spacing: 16),
     ]
 
     init(transcriptions: [Transcription]) {
         self.transcriptions = transcriptions
-        self.analysis = Self.analyze(transcriptions: transcriptions)
+        analysis = Self.analyze(transcriptions: transcriptions)
     }
 
     var body: some View {
@@ -24,13 +24,13 @@ struct PerformanceAnalysisView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 30) {
                     summarySection
-                    
+
                     systemInfoSection
-                    
+
                     if !analysis.transcriptionModels.isEmpty {
                         transcriptionPerformanceSection
                     }
-                    
+
                     if !analysis.enhancementModels.isEmpty {
                         enhancementPerformanceSection
                     }
@@ -60,20 +60,20 @@ struct PerformanceAnalysisView: View {
     private var summarySection: some View {
         HStack(spacing: 12) {
             SummaryCard(
-                icon: "doc.text.fill", 
-                value: "\(analysis.totalTranscripts)", 
+                icon: "doc.text.fill",
+                value: "\(analysis.totalTranscripts)",
                 label: "Total Transcripts",
                 color: .indigo
             )
             SummaryCard(
-                icon: "waveform.path.ecg", 
-                value: "\(analysis.totalWithTranscriptionData)", 
+                icon: "waveform.path.ecg",
+                value: "\(analysis.totalWithTranscriptionData)",
                 label: "Analyzable",
                 color: .teal
             )
             SummaryCard(
-                icon: "sparkles", 
-                value: "\(analysis.totalEnhancedFiles)", 
+                icon: "sparkles",
+                value: "\(analysis.totalEnhancedFiles)",
                 label: "Enhanced",
                 color: .mint
             )
@@ -121,7 +121,7 @@ struct PerformanceAnalysisView: View {
             }
         }
     }
-    
+
     private func formatDuration(_ duration: TimeInterval) -> String {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
@@ -130,7 +130,7 @@ struct PerformanceAnalysisView: View {
     }
 
     // MARK: - Analysis Logic
-    
+
     struct AnalysisResult {
         let totalTranscripts: Int
         let totalWithTranscriptionData: Int
@@ -155,20 +155,20 @@ struct PerformanceAnalysisView: View {
         let totalWithTranscriptionData = transcriptions.filter { $0.transcriptionDuration != nil }.count
         let totalAudioDuration = transcriptions.reduce(0) { $0 + $1.duration }
         let totalEnhancedFiles = transcriptions.filter { $0.enhancedText != nil && $0.enhancementDuration != nil }.count
-        
+
         let transcriptionStats = processStats(
             for: transcriptions,
             modelNameKeyPath: \.transcriptionModelName,
             durationKeyPath: \.transcriptionDuration,
             audioDurationKeyPath: \.duration
         )
-        
+
         let enhancementStats = processStats(
             for: transcriptions,
             modelNameKeyPath: \.aiEnhancementModelName,
             durationKeyPath: \.enhancementDuration
         )
-        
+
         return AnalysisResult(
             totalTranscripts: totalTranscripts,
             totalWithTranscriptionData: totalWithTranscriptionData,
@@ -178,33 +178,33 @@ struct PerformanceAnalysisView: View {
             enhancementModels: enhancementStats
         )
     }
-    
+
     static func processStats(for transcriptions: [Transcription],
                              modelNameKeyPath: KeyPath<Transcription, String?>,
                              durationKeyPath: KeyPath<Transcription, TimeInterval?>,
-                             audioDurationKeyPath: KeyPath<Transcription, TimeInterval>? = nil) -> [ModelStat] {
-        
+                             audioDurationKeyPath: KeyPath<Transcription, TimeInterval>? = nil) -> [ModelStat]
+    {
         let relevantTranscriptions = transcriptions.filter {
             $0[keyPath: modelNameKeyPath] != nil && $0[keyPath: durationKeyPath] != nil
         }
-        
+
         let groupedByModel = Dictionary(grouping: relevantTranscriptions) {
             $0[keyPath: modelNameKeyPath] ?? "Unknown"
         }
-        
+
         return groupedByModel.map { modelName, items in
             let fileCount = items.count
             let totalProcessingTime = items.reduce(0) { $0 + ($1[keyPath: durationKeyPath] ?? 0) }
             let avgProcessingTime = totalProcessingTime / Double(fileCount)
-            
+
             let totalAudioDuration = items.reduce(0) { $0 + $1.duration }
             let avgAudioDuration = totalAudioDuration / Double(fileCount)
-            
+
             var speedFactor = 0.0
             if let audioDurationKeyPath = audioDurationKeyPath, totalProcessingTime > 0 {
                 speedFactor = totalAudioDuration / totalProcessingTime
             }
-            
+
             return ModelStat(
                 name: modelName,
                 fileCount: fileCount,
@@ -240,7 +240,6 @@ private func getMemoryInfo() -> String {
     return ByteCountFormatter.string(fromByteCount: Int64(totalMemory), countStyle: .memory)
 }
 
-
 // MARK: - Subviews
 
 struct SummaryCard: View {
@@ -254,11 +253,11 @@ struct SummaryCard: View {
             Image(systemName: icon)
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(color)
-            
+
             Text(value)
                 .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundColor(.primary)
-            
+
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -297,7 +296,7 @@ struct SystemInfoCard: View {
                 .font(.caption.weight(.medium))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
-            
+
             Text(value)
                 .font(.system(.body, design: .default, weight: .semibold))
                 .foregroundColor(.primary)
@@ -325,12 +324,12 @@ struct TranscriptionModelCard: View {
                     .minimumScaleFactor(0.7)
 
                 Spacer()
-                
+
                 Text("\(modelStat.fileCount) transcripts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            
+
             Divider()
 
             VStack(spacing: 16) {
@@ -344,7 +343,7 @@ struct TranscriptionModelCard: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-                
+
                 Divider()
 
                 // Secondary metrics
@@ -367,7 +366,7 @@ struct TranscriptionModelCard: View {
         .background(MetricCardBackground(color: .mint))
         .cornerRadius(12)
     }
-    
+
     private func formatDuration(_ duration: TimeInterval) -> String {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
@@ -390,14 +389,14 @@ struct EnhancementModelCard: View {
                     .minimumScaleFactor(0.7)
 
                 Spacer()
-                
+
                 Text("\(modelStat.fileCount) transcripts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            
+
             Divider()
-            
+
             VStack(alignment: .center) {
                 Text(String(format: "%.2f s", modelStat.avgProcessingTime))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
@@ -416,14 +415,14 @@ struct EnhancementModelCard: View {
 
 struct MetricCardBackground: View {
     let color: Color
-    
+
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(
                 LinearGradient(
                     gradient: Gradient(stops: [
                         .init(color: color.opacity(0.15), location: 0),
-                        .init(color: Color(NSColor.windowBackgroundColor).opacity(0.1), location: 0.6)
+                        .init(color: Color(NSColor.windowBackgroundColor).opacity(0.1), location: 0.6),
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -435,7 +434,7 @@ struct MetricCardBackground: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.quaternaryLabelColor).opacity(0.3),
-                                Color(NSColor.quaternaryLabelColor).opacity(0.1)
+                                Color(NSColor.quaternaryLabelColor).opacity(0.1),
                             ]),
                             startPoint: .top,
                             endPoint: .bottom
@@ -451,7 +450,7 @@ struct MetricDisplay: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -459,7 +458,7 @@ struct MetricDisplay: View {
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.5)
-            
+
             Text(value)
                 .font(.system(.body, design: .monospaced, weight: .semibold))
                 .foregroundColor(color)

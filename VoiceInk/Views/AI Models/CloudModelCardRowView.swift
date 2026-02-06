@@ -1,12 +1,13 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 // MARK: - Cloud Model Card View
+
 struct CloudModelCardView: View {
     let model: CloudModel
     let isCurrent: Bool
     var setDefaultAction: () -> Void
-    
+
     @EnvironmentObject private var whisperState: WhisperState
     @StateObject private var aiService = AIService()
     @State private var isExpanded = false
@@ -15,18 +16,18 @@ struct CloudModelCardView: View {
     @State private var verificationStatus: VerificationStatus = .none
     @State private var isConfiguredState: Bool = false
     @State private var verificationError: String? = nil
-    
+
     enum VerificationStatus {
         case none, verifying, success, failure
     }
-    
+
     private var isConfigured: Bool {
         guard let savedKey = UserDefaults.standard.string(forKey: "\(providerKey)APIKey") else {
             return false
         }
         return !savedKey.isEmpty
     }
-    
+
     private var providerKey: String {
         switch model.provider {
         case .groq:
@@ -45,7 +46,7 @@ struct CloudModelCardView: View {
             return model.provider.rawValue
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Main card content
@@ -56,16 +57,16 @@ struct CloudModelCardView: View {
                     descriptionSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
+
                 actionSection
             }
             .padding(16)
-            
+
             // Expandable configuration section
             if isExpanded {
                 Divider()
                     .padding(.horizontal, 16)
-                
+
                 configurationSection
                     .padding(16)
             }
@@ -76,19 +77,19 @@ struct CloudModelCardView: View {
             isConfiguredState = isConfigured
         }
     }
-    
+
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
-            
+
             statusBadge
-            
+
             Spacer()
         }
     }
-    
+
     private var statusBadge: some View {
         Group {
             if isCurrent {
@@ -115,7 +116,7 @@ struct CloudModelCardView: View {
             }
         }
     }
-    
+
     private var metadataSection: some View {
         HStack(spacing: 12) {
             // Provider
@@ -123,18 +124,18 @@ struct CloudModelCardView: View {
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
-            
+
             // Language
             Label(model.language, systemImage: "globe")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
-            
+
             Label("Cloud Model", systemImage: "icloud")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
-            
+
             // Accuracy
             HStack(spacing: 3) {
                 Text("Accuracy")
@@ -147,7 +148,7 @@ struct CloudModelCardView: View {
         }
         .lineLimit(1)
     }
-    
+
     private var descriptionSection: some View {
         Text(model.description)
             .font(.system(size: 11))
@@ -156,7 +157,7 @@ struct CloudModelCardView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 4)
     }
-    
+
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
@@ -193,7 +194,7 @@ struct CloudModelCardView: View {
                 }
                 .buttonStyle(.plain)
             }
-            
+
             if isConfiguredState {
                 Menu {
                     Button {
@@ -211,18 +212,18 @@ struct CloudModelCardView: View {
             }
         }
     }
-    
+
     private var configurationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("API Key Configuration")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
-            
+
             HStack(spacing: 8) {
                 SecureField("Enter your \(model.provider.rawValue) API key", text: $apiKey)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isVerifying)
-                
+
                 Button(action: verifyAPIKey) {
                     HStack(spacing: 4) {
                         if isVerifying {
@@ -247,7 +248,7 @@ struct CloudModelCardView: View {
                 .buttonStyle(.plain)
                 .disabled(apiKey.isEmpty || isVerifying)
             }
-            
+
             if verificationStatus == .failure {
                 if let error = verificationError {
                     Text(error)
@@ -265,20 +266,20 @@ struct CloudModelCardView: View {
             }
         }
     }
-    
+
     private func loadSavedAPIKey() {
         if let savedKey = UserDefaults.standard.string(forKey: "\(providerKey)APIKey") {
             apiKey = savedKey
             verificationStatus = .success
         }
     }
-    
+
     private func verifyAPIKey() {
         guard !apiKey.isEmpty else { return }
-        
+
         isVerifying = true
         verificationStatus = .verifying
-        
+
         switch model.provider {
         case .groq:
             aiService.selectedProvider = .groq
@@ -299,7 +300,7 @@ struct CloudModelCardView: View {
             verificationStatus = .failure
             return
         }
-        
+
         aiService.saveAPIKey(apiKey) { isValid, errorMessage in
             DispatchQueue.main.async {
                 self.isVerifying = false
@@ -309,7 +310,7 @@ struct CloudModelCardView: View {
                     // Save the API key
                     UserDefaults.standard.set(self.apiKey, forKey: "\(self.providerKey)APIKey")
                     self.isConfiguredState = true
-                    
+
                     // Collapse the configuration section after successful verification
                     withAnimation(.easeInOut(duration: 0.3)) {
                         self.isExpanded = false
@@ -318,20 +319,20 @@ struct CloudModelCardView: View {
                     self.verificationStatus = .failure
                     self.verificationError = errorMessage
                 }
-                
+
                 // Restore original provider
                 // aiService.selectedProvider = originalProvider // This line was removed as per the new_code
             }
         }
     }
-    
+
     private func clearAPIKey() {
         UserDefaults.standard.removeObject(forKey: "\(providerKey)APIKey")
         apiKey = ""
         verificationStatus = .none
         verificationError = nil
         isConfiguredState = false
-        
+
         // If this model is currently the default, clear it
         if isCurrent {
             Task {
@@ -341,7 +342,7 @@ struct CloudModelCardView: View {
                 }
             }
         }
-        
+
         withAnimation(.easeInOut(duration: 0.3)) {
             isExpanded = false
         }

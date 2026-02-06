@@ -1,18 +1,18 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
-struct ClipboardManager {
+enum ClipboardManager {
     enum ClipboardError: Error {
         case copyFailed
         case accessDenied
     }
-    
+
     static func copyToClipboard(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         return pasteboard.setString(text, forType: .string)
     }
-    
+
     static func getClipboardContent() -> String? {
         return NSPasteboard.general.string(forType: .string)
     }
@@ -20,7 +20,7 @@ struct ClipboardManager {
 
 struct ClipboardMessageModifier: ViewModifier {
     @Binding var message: String
-    
+
     func body(content: Content) -> some View {
         content
             .overlay(
@@ -45,6 +45,6 @@ struct ClipboardMessageModifier: ViewModifier {
 
 extension View {
     func clipboardMessage(_ message: Binding<String>) -> some View {
-        self.modifier(ClipboardMessageModifier(message: message))
+        modifier(ClipboardMessageModifier(message: message))
     }
 }

@@ -1,7 +1,7 @@
-import SwiftUI
-import SwiftData
-import UniformTypeIdentifiers
 import AVFoundation
+import SwiftData
+import SwiftUI
+import UniformTypeIdentifiers
 
 struct AudioTranscribeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -12,22 +12,22 @@ struct AudioTranscribeView: View {
     @State private var isAudioFileSelected = false
     @State private var isEnhancementEnabled = false
     @State private var selectedPromptId: UUID?
-    
+
     var body: some View {
         ZStack {
             Color(NSColor.controlBackgroundColor)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 if transcriptionManager.isProcessing {
                     processingView
                 } else {
                     dropZoneView
                 }
-                
+
                 Divider()
                     .padding(.vertical)
-                
+
                 // Show current transcription result
                 if let transcription = transcriptionManager.currentTranscription {
                     TranscriptionResultView(transcription: transcription)
@@ -57,14 +57,14 @@ struct AudioTranscribeView: View {
             }
         }
     }
-    
+
     private var dropZoneView: some View {
         VStack(spacing: 16) {
             if isAudioFileSelected {
                 VStack(spacing: 16) {
                     Text("Audio file selected: \(selectedAudioURL?.lastPathComponent ?? "")")
                         .font(.headline)
-                    
+
                     // AI Enhancement Settings
                     if let enhancementService = whisperState.getEnhancementService() {
                         VStack(spacing: 16) {
@@ -72,19 +72,19 @@ struct AudioTranscribeView: View {
                             HStack(spacing: 16) {
                                 Toggle("AI Enhancement", isOn: $isEnhancementEnabled)
                                     .toggleStyle(.switch)
-                                    .onChange(of: isEnhancementEnabled) { oldValue, newValue in
+                                    .onChange(of: isEnhancementEnabled) { _, newValue in
                                         enhancementService.isEnhancementEnabled = newValue
                                     }
-                                
+
                                 if isEnhancementEnabled {
                                     Divider()
                                         .frame(height: 20)
-                                    
+
                                     // Prompt Selection
                                     HStack(spacing: 8) {
                                         Text("Prompt:")
                                             .font(.subheadline)
-                                        
+
                                         if enhancementService.allPrompts.isEmpty {
                                             Text("No prompts available")
                                                 .foregroundColor(.secondary)
@@ -100,7 +100,7 @@ struct AudioTranscribeView: View {
                                                     enhancementService.selectedPromptId = newValue
                                                 }
                                             )
-                                            
+
                                             Picker("", selection: promptBinding) {
                                                 ForEach(enhancementService.allPrompts) { prompt in
                                                     Text(prompt.title).tag(prompt.id)
@@ -114,7 +114,7 @@ struct AudioTranscribeView: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                                        .background(CardBackground(isSelected: false))
+                            .background(CardBackground(isSelected: false))
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                         .onAppear {
@@ -123,7 +123,7 @@ struct AudioTranscribeView: View {
                             selectedPromptId = enhancementService.selectedPromptId
                         }
                     }
-                    
+
                     // Action Buttons in a row
                     HStack(spacing: 12) {
                         Button("Start Transcription") {
@@ -136,7 +136,7 @@ struct AudioTranscribeView: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
-                        
+
                         Button("Choose Different File") {
                             selectedAudioURL = nil
                             isAudioFileSelected = false
@@ -159,18 +159,18 @@ struct AudioTranscribeView: View {
                                 )
                                 .foregroundColor(isDropTargeted ? .blue : .gray.opacity(0.5))
                         )
-                    
+
                     VStack(spacing: 16) {
                         Image(systemName: "arrow.down.doc")
                             .font(.system(size: 32))
                             .foregroundColor(isDropTargeted ? .blue : .gray)
-                        
+
                         Text("Drop audio or video file here")
                             .font(.headline)
-                        
+
                         Text("or")
                             .foregroundColor(.secondary)
-                        
+
                         Button("Choose File") {
                             selectFile()
                         }
@@ -181,14 +181,14 @@ struct AudioTranscribeView: View {
                 .frame(height: 200)
                 .padding(.horizontal)
             }
-            
+
             Text("Supported formats: WAV, MP3, M4A, AIFF, MP4, MOV")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
         .padding()
     }
-    
+
     private var processingView: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -198,16 +198,16 @@ struct AudioTranscribeView: View {
         }
         .padding()
     }
-    
+
     private func selectFile() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
         panel.allowedContentTypes = [
-            .audio, .movie
+            .audio, .movie,
         ]
-        
+
         if panel.runModal() == .OK {
             if let url = panel.url {
                 selectedAudioURL = url
@@ -215,30 +215,30 @@ struct AudioTranscribeView: View {
             }
         }
     }
-    
+
     private func handleDroppedFile(_ providers: [NSItemProvider]) {
         guard let provider = providers.first else { return }
-        
+
         // List of type identifiers to try
         let typeIdentifiers = [
             UTType.fileURL.identifier,
             UTType.audio.identifier,
             UTType.movie.identifier,
             UTType.data.identifier,
-            "public.file-url"
+            "public.file-url",
         ]
-        
+
         // Try each type identifier
         for typeIdentifier in typeIdentifiers {
             if provider.hasItemConformingToTypeIdentifier(typeIdentifier) {
-                provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (item, error) in
+                provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { item, error in
                     if let error = error {
                         print("Error loading dropped file with type \(typeIdentifier): \(error)")
                         return
                     }
-                    
+
                     var fileURL: URL?
-                    
+
                     if let url = item as? URL {
                         fileURL = url
                     } else if let data = item as? Data {
@@ -246,13 +246,14 @@ struct AudioTranscribeView: View {
                         if let url = URL(dataRepresentation: data, relativeTo: nil) {
                             fileURL = url
                         } else if let urlString = String(data: data, encoding: .utf8),
-                                  let url = URL(string: urlString) {
+                                  let url = URL(string: urlString)
+                        {
                             fileURL = url
                         }
                     } else if let urlString = item as? String {
                         fileURL = URL(string: urlString)
                     }
-                    
+
                     if let finalURL = fileURL {
                         DispatchQueue.main.async {
                             self.validateAndSetAudioFile(finalURL)
@@ -264,16 +265,16 @@ struct AudioTranscribeView: View {
             }
         }
     }
-    
+
     private func validateAndSetAudioFile(_ url: URL) {
         print("Attempting to validate file: \(url.path)")
-        
+
         // Check if file exists
         guard FileManager.default.fileExists(atPath: url.path) else {
             print("File does not exist at path: \(url.path)")
             return
         }
-        
+
         // Try to access security scoped resource
         let accessing = url.startAccessingSecurityScopedResource()
         defer {
@@ -281,15 +282,15 @@ struct AudioTranscribeView: View {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-        
+
         // Validate file type
         guard SupportedMedia.isSupported(url: url) else { return }
-        
+
         print("File validated successfully: \(url.lastPathComponent)")
         selectedAudioURL = url
         isAudioFileSelected = true
     }
-    
+
     private func formatDuration(_ duration: TimeInterval) -> String {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60

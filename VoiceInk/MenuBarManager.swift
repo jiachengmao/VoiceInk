@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 class MenuBarManager: ObservableObject {
     @Published var isMenuBarOnly: Bool {
@@ -8,21 +8,20 @@ class MenuBarManager: ObservableObject {
             updateAppActivationPolicy()
         }
     }
-    
-    
+
     init() {
-        self.isMenuBarOnly = UserDefaults.standard.bool(forKey: "IsMenuBarOnly")
+        isMenuBarOnly = UserDefaults.standard.bool(forKey: "IsMenuBarOnly")
         updateAppActivationPolicy()
     }
-    
+
     func toggleMenuBarOnly() {
         isMenuBarOnly.toggle()
     }
-    
+
     func applyActivationPolicy() {
         updateAppActivationPolicy()
     }
-    
+
     func focusMainWindow() {
         applyActivationPolicy()
         DispatchQueue.main.async {
@@ -31,7 +30,7 @@ class MenuBarManager: ObservableObject {
             }
         }
     }
-    
+
     private func updateAppActivationPolicy() {
         let applyPolicy = { [weak self] in
             guard let self else { return }
@@ -51,20 +50,20 @@ class MenuBarManager: ObservableObject {
             DispatchQueue.main.async(execute: applyPolicy)
         }
     }
-    
+
     func openMainWindowAndNavigate(to destination: String) {
         print("MenuBarManager: Navigating to \(destination)")
-        
+
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            
+
             self.applyActivationPolicy()
-            
+
             guard WindowManager.shared.showMainWindow() != nil else {
                 print("MenuBarManager: Unable to show main window for navigation")
                 return
             }
-            
+
             // Post a notification to navigate to the desired destination
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 NotificationCenter.default.post(

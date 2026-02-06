@@ -7,9 +7,9 @@ struct NotchRecorderView: View {
     @State private var isHovering = false
     @State private var activePopover: ActivePopoverState = .none
     @ObservedObject private var powerModeManager = PowerModeManager.shared
-    
+
     @EnvironmentObject private var enhancementService: AIEnhancementService
-    
+
     private var menuBarHeight: CGFloat {
         if let screen = NSScreen.main {
             if screen.safeAreaInsets.top > 0 {
@@ -19,7 +19,7 @@ struct NotchRecorderView: View {
         }
         return NSStatusBar.system.thickness
     }
-    
+
     private var exactNotchWidth: CGFloat {
         if let screen = NSScreen.main {
             if screen.safeAreaInsets.left > 0 {
@@ -29,7 +29,7 @@ struct NotchRecorderView: View {
         }
         return 200
     }
-    
+
     private var leftSection: some View {
         HStack(spacing: 12) {
             RecorderPromptButton(
@@ -49,14 +49,14 @@ struct NotchRecorderView: View {
         .frame(width: 64)
         .padding(.leading, 16)
     }
-    
+
     private var centerSection: some View {
         Rectangle()
             .fill(Color.clear)
             .frame(width: exactNotchWidth)
             .contentShape(Rectangle())
     }
-    
+
     private var rightSection: some View {
         HStack(spacing: 8) {
             Spacer()
@@ -65,7 +65,7 @@ struct NotchRecorderView: View {
         .frame(width: 64)
         .padding(.trailing, 16)
     }
-    
+
     private var statusDisplay: some View {
         RecorderStatusDisplay(
             currentState: whisperState.recordingState,
@@ -75,7 +75,7 @@ struct NotchRecorderView: View {
         .frame(width: 70)
         .padding(.trailing, 8)
     }
-    
+
     var body: some View {
         Group {
             if windowManager.isVisible {

@@ -6,8 +6,10 @@ enum WhisperStateError: Error, Identifiable {
     case whisperCoreFailed
     case unzipFailed
     case unknownError
-    
-    var id: String { UUID().uuidString }
+
+    var id: String {
+        UUID().uuidString
+    }
 }
 
 extension WhisperStateError: LocalizedError {
@@ -25,7 +27,7 @@ extension WhisperStateError: LocalizedError {
             return "An unknown error occurred."
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .modelLoadFailed:
@@ -40,4 +42,4 @@ extension WhisperStateError: LocalizedError {
             return "Please restart the application. If the problem persists, contact support."
         }
     }
-} 
+}

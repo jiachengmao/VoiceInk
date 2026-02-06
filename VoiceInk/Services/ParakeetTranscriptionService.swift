@@ -1,7 +1,7 @@
-import Foundation
-import CoreML
 import AVFoundation
+import CoreML
 import FluidAudio
+import Foundation
 import os.log
 
 class ParakeetTranscriptionService: TranscriptionService {
@@ -27,8 +27,8 @@ class ParakeetTranscriptionService: TranscriptionService {
             version: version
         )
         try await manager.initialize(models: models)
-        self.asrManager = manager
-        self.activeVersion = version
+        asrManager = manager
+        activeVersion = version
     }
 
     func loadModel(for model: ParakeetModel) async throws {
@@ -83,14 +83,12 @@ class ParakeetTranscriptionService: TranscriptionService {
                 throw ASRError.invalidAudioData
             }
 
-            let floats = stride(from: 44, to: data.count, by: 2).map {
-                return data[$0..<$0 + 2].withUnsafeBytes {
+            return stride(from: 44, to: data.count, by: 2).map {
+                data[$0 ..< $0 + 2].withUnsafeBytes {
                     let short = Int16(littleEndian: $0.load(as: Int16.self))
                     return max(-1.0, min(Float(short) / 32767.0, 1.0))
                 }
             }
-
-            return floats
         } catch {
             throw ASRError.invalidAudioData
         }

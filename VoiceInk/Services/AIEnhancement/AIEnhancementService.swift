@@ -1,7 +1,7 @@
-import Foundation
-import SwiftData
 import AppKit
+import Foundation
 import os
+import SwiftData
 
 enum EnhancementPrompt {
     case transcriptionEnhancement
@@ -70,32 +70,33 @@ class AIEnhancementService: ObservableObject {
     private let rateLimitInterval: TimeInterval = 1.0
     private var lastRequestTime: Date?
     private let modelContext: ModelContext
-    
+
     @Published var lastCapturedClipboard: String?
 
     init(aiService: AIService = AIService(), modelContext: ModelContext) {
         self.aiService = aiService
         self.modelContext = modelContext
-        self.screenCaptureService = ScreenCaptureService()
-        self.customVocabularyService = CustomVocabularyService.shared
+        screenCaptureService = ScreenCaptureService()
+        customVocabularyService = CustomVocabularyService.shared
 
-        self.isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
-        self.useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")
-        self.useScreenCaptureContext = UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
+        isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
+        useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")
+        useScreenCaptureContext = UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
 
         if let savedPromptsData = UserDefaults.standard.data(forKey: "customPrompts"),
-           let decodedPrompts = try? JSONDecoder().decode([CustomPrompt].self, from: savedPromptsData) {
-            self.customPrompts = decodedPrompts
+           let decodedPrompts = try? JSONDecoder().decode([CustomPrompt].self, from: savedPromptsData)
+        {
+            customPrompts = decodedPrompts
         } else {
-            self.customPrompts = []
+            customPrompts = []
         }
 
         if let savedPromptId = UserDefaults.standard.string(forKey: "selectedPromptId") {
-            self.selectedPromptId = UUID(uuidString: savedPromptId)
+            selectedPromptId = UUID(uuidString: savedPromptId)
         }
 
-        if isEnhancementEnabled && (selectedPromptId == nil || !allPrompts.contains(where: { $0.id == selectedPromptId })) {
-            self.selectedPromptId = allPrompts.first?.id
+        if isEnhancementEnabled, selectedPromptId == nil || !allPrompts.contains(where: { $0.id == selectedPromptId }) {
+            selectedPromptId = allPrompts.first?.id
         }
 
         NotificationCenter.default.addObserver(
@@ -139,7 +140,7 @@ class AIEnhancementService: ObservableObject {
         lastRequestTime = Date()
     }
 
-    private func getSystemMessage(for mode: EnhancementPrompt) async -> String {
+    private func getSystemMessage(for _: EnhancementPrompt) async -> String {
         let selectedTextContext: String
         if AXIsProcessTrusted() {
             if let selectedText = await SelectedTextService.fetchSelectedText(), !selectedText.isEmpty {
@@ -152,16 +153,18 @@ class AIEnhancementService: ObservableObject {
         }
 
         let clipboardContext = if useClipboardContext,
-                              let clipboardText = lastCapturedClipboard,
-                              !clipboardText.isEmpty {
+                                  let clipboardText = lastCapturedClipboard,
+                                  !clipboardText.isEmpty
+        {
             "\n\n<CLIPBOARD_CONTEXT>\n\(clipboardText)\n</CLIPBOARD_CONTEXT>"
         } else {
             ""
         }
 
         let screenCaptureContext = if useScreenCaptureContext,
-                                   let capturedText = screenCaptureService.lastCapturedText,
-                                   !capturedText.isEmpty {
+                                      let capturedText = screenCaptureService.lastCapturedText,
+                                      !capturedText.isEmpty
+        {
             "\n\n<CURRENT_WINDOW_CONTEXT>\n\(capturedText)\n</CURRENT_WINDOW_CONTEXT>"
         } else {
             ""
@@ -202,7 +205,7 @@ class AIEnhancementService: ObservableObject {
 
         let formattedText = "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
         let systemMessage = await getSystemMessage(for: mode)
-        
+
         // Persist the exact payload being sent (also used for UI)
         await MainActor.run {
             self.lastSystemMessageSent = systemMessage
@@ -216,8 +219,7 @@ class AIEnhancementService: ObservableObject {
         if aiService.selectedProvider == .ollama {
             do {
                 let result = try await aiService.enhanceWithOllama(text: formattedText, systemPrompt: systemMessage)
-                let filteredResult = AIEnhancementOutputFilter.filter(result)
-                return filteredResult
+                return AIEnhancementOutputFilter.filter(result)
             } catch {
                 if let localError = error as? LocalAIError {
                     throw EnhancementError.customError(localError.errorDescription ?? "An unknown Ollama error occurred.")
@@ -236,8 +238,8 @@ class AIEnhancementService: ObservableObject {
                 "max_tokens": 8192,
                 "system": systemMessage,
                 "messages": [
-                    ["role": "user", "content": formattedText]
-                ]
+                    ["role": "user", "content": formattedText],
+                ],
             ]
 
             var request = URLRequest(url: URL(string: aiService.selectedProvider.baseURL)!)
@@ -259,15 +261,15 @@ class AIEnhancementService: ObservableObject {
                     guard let jsonResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                           let content = jsonResponse["content"] as? [[String: Any]],
                           let firstContent = content.first,
-                          let enhancedText = firstContent["text"] as? String else {
+                          let enhancedText = firstContent["text"] as? String
+                    else {
                         throw EnhancementError.enhancementFailed
                     }
 
-                    let filteredText = AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
-                    return filteredText
+                    return AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
                 } else if httpResponse.statusCode == 429 {
                     throw EnhancementError.rateLimitExceeded
-                } else if (500...599).contains(httpResponse.statusCode) {
+                } else if (500 ... 599).contains(httpResponse.statusCode) {
                     throw EnhancementError.serverError
                 } else {
                     let errorString = String(data: data, encoding: .utf8) ?? "Could not decode error response."
@@ -292,14 +294,14 @@ class AIEnhancementService: ObservableObject {
 
             let messages: [[String: Any]] = [
                 ["role": "system", "content": systemMessage],
-                ["role": "user", "content": formattedText]
+                ["role": "user", "content": formattedText],
             ]
 
             var requestBody: [String: Any] = [
                 "model": aiService.currentModel,
                 "messages": messages,
                 "temperature": aiService.currentModel.lowercased().hasPrefix("gpt-5") ? 1.0 : 0.3,
-                "stream": false
+                "stream": false,
             ]
 
             // Add reasoning_effort parameter if the model supports it
@@ -321,15 +323,15 @@ class AIEnhancementService: ObservableObject {
                           let choices = jsonResponse["choices"] as? [[String: Any]],
                           let firstChoice = choices.first,
                           let message = firstChoice["message"] as? [String: Any],
-                          let enhancedText = message["content"] as? String else {
+                          let enhancedText = message["content"] as? String
+                    else {
                         throw EnhancementError.enhancementFailed
                     }
 
-                    let filteredText = AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
-                    return filteredText
+                    return AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
                 } else if httpResponse.statusCode == 429 {
                     throw EnhancementError.rateLimitExceeded
-                } else if (500...599).contains(httpResponse.statusCode) {
+                } else if (500 ... 599).contains(httpResponse.statusCode) {
                     throw EnhancementError.serverError
                 } else {
                     let errorString = String(data: data, encoding: .utf8) ?? "Could not decode error response."
@@ -421,7 +423,7 @@ class AIEnhancementService: ObservableObject {
     func captureClipboardContext() {
         lastCapturedClipboard = NSPasteboard.general.string(forType: .string)
     }
-    
+
     func clearCapturedContexts() {
         lastCapturedClipboard = nil
         screenCaptureService.lastCapturedText = nil
@@ -502,7 +504,7 @@ extension EnhancementError: LocalizedError {
             return "The AI provider's server encountered an error. Please try again later."
         case .rateLimitExceeded:
             return "Rate limit exceeded. Please try again later."
-        case .customError(let message):
+        case let .customError(message):
             return message
         }
     }

@@ -1,18 +1,18 @@
 import Foundation
 import os
 
-struct TranscriptionOutputFilter {
+enum TranscriptionOutputFilter {
     private static let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionOutputFilter")
-    
+
     private static let hallucinationPatterns = [
-        #"\[.*?\]"#,     // []
-        #"\(.*?\)"#,     // ()
-        #"\{.*?\}"#      // {}
+        #"\[.*?\]"#, // []
+        #"\(.*?\)"#, // ()
+        #"\{.*?\}"#, // {}
     ]
 
     private static let fillerWords = [
         "uh", "um", "uhm", "umm", "uhh", "uhhh", "ah", "eh",
-        "hmm", "hm", "mmm", "mm", "mh", "ha", "ehh"
+        "hmm", "hm", "mmm", "mm", "mh", "ha", "ehh",
     ]
     static func filter(_ text: String) -> String {
         var filteredText = text
@@ -54,4 +54,4 @@ struct TranscriptionOutputFilter {
 
         return filteredText
     }
-} 
+}

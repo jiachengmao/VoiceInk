@@ -1,8 +1,8 @@
-import SwiftUI
-import SwiftData
 import KeyboardShortcuts
+import SwiftData
+import SwiftUI
 
-// ViewType enum with all cases
+/// ViewType enum with all cases
 enum ViewType: String, CaseIterable, Identifiable {
     case metrics = "Dashboard"
     case transcribeAudio = "Transcribe Audio"
@@ -15,7 +15,9 @@ enum ViewType: String, CaseIterable, Identifiable {
     case dictionary = "Dictionary"
     case settings = "Settings"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var icon: String {
         switch self {
@@ -37,7 +39,7 @@ struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
+    func makeNSView(context _: Context) -> NSVisualEffectView {
         let visualEffectView = NSVisualEffectView()
         visualEffectView.material = material
         visualEffectView.blendingMode = blendingMode
@@ -45,7 +47,7 @@ struct VisualEffectView: NSViewRepresentable {
         return visualEffectView
     }
 
-    func updateNSView(_ visualEffectView: NSVisualEffectView, context: Context) {
+    func updateNSView(_ visualEffectView: NSVisualEffectView, context _: Context) {
         visualEffectView.material = material
         visualEffectView.blendingMode = blendingMode
     }
@@ -150,7 +152,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func detailView(for viewType: ViewType) -> some View {
         switch viewType {
@@ -178,5 +180,3 @@ struct ContentView: View {
         }
     }
 }
-
- 

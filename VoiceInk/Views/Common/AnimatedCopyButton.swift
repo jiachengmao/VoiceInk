@@ -3,7 +3,7 @@ import SwiftUI
 struct AnimatedCopyButton: View {
     let textToCopy: String
     @State private var isCopied: Bool = false
-    
+
     var body: some View {
         Button {
             copyToClipboard()
@@ -27,13 +27,13 @@ struct AnimatedCopyButton: View {
         .scaleEffect(isCopied ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isCopied)
     }
-    
+
     private func copyToClipboard() {
-        let _ = ClipboardManager.copyToClipboard(textToCopy)
+        _ = ClipboardManager.copyToClipboard(textToCopy)
         withAnimation {
             isCopied = true
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation {
                 isCopied = false
@@ -51,4 +51,4 @@ struct AnimatedCopyButton_Previews: PreviewProvider {
         }
         .padding()
     }
-} 
+}

@@ -1,5 +1,5 @@
-import Foundation
 import AVFoundation
+import Foundation
 import SwiftUI
 
 class CustomSoundManager: ObservableObject {
@@ -9,9 +9,17 @@ class CustomSoundManager: ObservableObject {
         case start
         case stop
 
-        var isUsingKey: String { "isUsingCustom\(rawValue.capitalized)Sound" }
-        var filenameKey: String { "custom\(rawValue.capitalized)SoundFilename" }
-        var standardName: String { "Custom\(rawValue.capitalized)Sound" }
+        var isUsingKey: String {
+            "isUsingCustom\(rawValue.capitalized)Sound"
+        }
+
+        var filenameKey: String {
+            "custom\(rawValue.capitalized)SoundFilename"
+        }
+
+        var standardName: String {
+            "Custom\(rawValue.capitalized)Sound"
+        }
     }
 
     @Published var isUsingCustomStartSound: Bool {
@@ -31,7 +39,7 @@ class CustomSoundManager: ObservableObject {
     private var customStopSoundFilename: String? {
         didSet { updateFilenameInUserDefaults(filename: customStopSoundFilename, for: .stop) }
     }
-    
+
     private func updateFilenameInUserDefaults(filename: String?, for type: SoundType) {
         if let filename = filename {
             UserDefaults.standard.set(filename, forKey: type.filenameKey)
@@ -41,10 +49,10 @@ class CustomSoundManager: ObservableObject {
     }
 
     private init() {
-        self.isUsingCustomStartSound = UserDefaults.standard.bool(forKey: SoundType.start.isUsingKey)
-        self.isUsingCustomStopSound = UserDefaults.standard.bool(forKey: SoundType.stop.isUsingKey)
-        self.customStartSoundFilename = UserDefaults.standard.string(forKey: SoundType.start.filenameKey)
-        self.customStopSoundFilename = UserDefaults.standard.string(forKey: SoundType.stop.filenameKey)
+        isUsingCustomStartSound = UserDefaults.standard.bool(forKey: SoundType.start.isUsingKey)
+        isUsingCustomStopSound = UserDefaults.standard.bool(forKey: SoundType.stop.isUsingKey)
+        customStartSoundFilename = UserDefaults.standard.string(forKey: SoundType.start.filenameKey)
+        customStopSoundFilename = UserDefaults.standard.string(forKey: SoundType.stop.filenameKey)
 
         createCustomSoundsDirectoryIfNeeded()
     }
@@ -67,7 +75,7 @@ class CustomSoundManager: ObservableObject {
     func getCustomSoundURL(for type: SoundType) -> URL? {
         let isUsing = (type == .start) ? isUsingCustomStartSound : isUsingCustomStopSound
         let filename = (type == .start) ? customStartSoundFilename : customStopSoundFilename
-        
+
         guard isUsing, let filename = filename, let directory = customSoundsDirectory() else {
             return nil
         }
@@ -80,7 +88,7 @@ class CustomSoundManager: ObservableObject {
         case .success:
             let copyResult = copySoundFile(from: url, standardName: type.standardName)
             switch copyResult {
-            case .success(let filename):
+            case let .success(filename):
                 if type == .start {
                     customStartSoundFilename = filename
                     isUsingCustomStartSound = true
@@ -90,22 +98,22 @@ class CustomSoundManager: ObservableObject {
                 }
                 notifyCustomSoundsChanged()
                 return .success(())
-            case .failure(let error):
+            case let .failure(error):
                 return .failure(error)
             }
-        case .failure(let error):
+        case let .failure(error):
             return .failure(error)
         }
     }
 
     func resetSoundToDefault(for type: SoundType) {
         let filename = (type == .start) ? customStartSoundFilename : customStopSoundFilename
-        
+
         if let filename = filename, let directory = customSoundsDirectory() {
             let fileURL = directory.appendingPathComponent(filename)
             try? FileManager.default.removeItem(at: fileURL)
         }
-        
+
         if type == .start {
             isUsingCustomStartSound = false
             customStartSoundFilename = nil
@@ -188,7 +196,7 @@ enum CustomSoundError: LocalizedError {
             return "Audio file not found"
         case .invalidAudioFile:
             return "Invalid audio file format"
-        case .durationTooLong(let duration, let maxDuration):
+        case let .durationTooLong(duration, maxDuration):
             return String(format: "Audio file is %.1f seconds long. Please use an audio file that is %.0f seconds or shorter for start and stop sounds.", duration, maxDuration)
         case .directoryCreationFailed:
             return "Failed to create custom sounds directory"

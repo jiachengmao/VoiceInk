@@ -5,7 +5,7 @@ struct PowerModeSettingsSection: View {
     @AppStorage("powerModeUIFlag") private var powerModeUIFlag = false
     @AppStorage(PowerModeDefaults.autoRestoreKey) private var powerModeAutoRestoreEnabled = false
     @State private var showDisableAlert = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
@@ -13,7 +13,7 @@ struct PowerModeSettingsSection: View {
                     .font(.system(size: 20))
                     .foregroundColor(.accentColor)
                     .frame(width: 24, height: 24)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Power Mode")
                         .font(.headline)
@@ -21,9 +21,9 @@ struct PowerModeSettingsSection: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Toggle("Enable Power Mode", isOn: toggleBinding)
                     .labelsHidden()
                     .toggleStyle(.switch)
@@ -33,13 +33,13 @@ struct PowerModeSettingsSection: View {
                 Divider()
                     .padding(.vertical, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                
+
                 HStack(spacing: 8) {
                     Toggle(isOn: $powerModeAutoRestoreEnabled) {
                         Text("Auto-Restore Preferences")
                     }
                     .toggleStyle(.switch)
-                    
+
                     InfoTip(
                         title: "Auto-Restore Preferences",
                         message: "After each recording session, revert enhancement and transcription preferences to whatever was configured before Power Mode was activated."
@@ -53,12 +53,12 @@ struct PowerModeSettingsSection: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(CardBackground(isSelected: false, useAccentGradientWhenSelected: true))
         .alert("Power Mode Still Active", isPresented: $showDisableAlert) {
-            Button("Got it", role: .cancel) { }
+            Button("Got it", role: .cancel) {}
         } message: {
             Text("Power Mode can't be disabled while any configuration is still enabled. Disable or remove your Power Modes first.")
         }
     }
-    
+
     private var toggleBinding: Binding<Bool> {
         Binding(
             get: { powerModeUIFlag },
@@ -73,7 +73,6 @@ struct PowerModeSettingsSection: View {
             }
         )
     }
-    
 }
 
 private extension Array where Element == PowerModeConfig {

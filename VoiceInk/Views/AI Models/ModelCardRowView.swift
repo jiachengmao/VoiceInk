@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct ModelCardRowView: View {
     let model: any TranscriptionModel
@@ -9,7 +9,7 @@ struct ModelCardRowView: View {
     let downloadProgress: [String: Double]
     let modelURL: URL?
     let isWarming: Bool
-    
+
     // Actions
     var deleteAction: () -> Void
     var setDefaultAction: () -> Void
@@ -41,10 +41,10 @@ struct ModelCardRowView: View {
                         setDefaultAction: setDefaultAction
                     )
                 }
-                    case .parakeet:
-            if let parakeetModel = model as? ParakeetModel {
-                ParakeetModelCardRowView(
-                    model: parakeetModel,
+            case .parakeet:
+                if let parakeetModel = model as? ParakeetModel {
+                    ParakeetModelCardRowView(
+                        model: parakeetModel,
                         whisperState: whisperState
                     )
                 }

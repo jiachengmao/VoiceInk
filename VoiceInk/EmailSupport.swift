@@ -1,8 +1,8 @@
+import AppKit
 import Foundation
 import SwiftUI
-import AppKit
 
-struct EmailSupport {
+enum EmailSupport {
     static func generateSupportEmailURL() -> URL? {
         let subject = "VoiceInk Support Request"
         let systemInfo = SystemInfoService.shared.getSystemInfoString()
@@ -29,18 +29,16 @@ struct EmailSupport {
 
 
         """
-        
+
         let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        
+
         return URL(string: "mailto:prakashjoshipax@gmail.com?subject=\(encodedSubject)&body=\(encodedBody)")
     }
-    
+
     static func openSupportEmail() {
         if let emailURL = generateSupportEmailURL() {
             NSWorkspace.shared.open(emailURL)
         }
     }
-    
-    
 }

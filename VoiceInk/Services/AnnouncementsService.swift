@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 
 /// A minimal pull-based announcements fetcher that shows one-time in-app banners.
 final class AnnouncementsService {
@@ -9,10 +9,10 @@ final class AnnouncementsService {
 
     // MARK: - Configuration
 
-    // Hosted via GitHub Pages for this repo
+    /// Hosted via GitHub Pages for this repo
     private let announcementsURL = URL(string: "https://beingpax.github.io/VoiceInk/announcements.json")!
 
-    // Fetch every 4 hours
+    /// Fetch every 4 hours
     private let refreshInterval: TimeInterval = 4 * 60 * 60
 
     private let dismissedKey = "dismissedAnnouncementIds"
@@ -41,7 +41,7 @@ final class AnnouncementsService {
 
     private func fetchAndMaybeShow() {
         let request = URLRequest(url: announcementsURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             guard let self = self else { return }
             guard error == nil, let data = data else { return }
             guard let announcements = try? JSONDecoder().decode([RemoteAnnouncement].self, from: data) else { return }
@@ -100,7 +100,4 @@ private struct RemoteAnnouncement: Decodable {
         if let endAt = endAt, let end = formatter.date(from: endAt), date > end { return false }
         return true
     }
-
 }
-
-

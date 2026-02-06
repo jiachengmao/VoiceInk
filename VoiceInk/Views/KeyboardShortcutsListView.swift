@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import KeyboardShortcuts
+import SwiftData
+import SwiftUI
 
 struct KeyboardShortcutsListView: View {
     @EnvironmentObject private var hotkeyManager: HotkeyManager
@@ -38,7 +38,7 @@ struct KeyboardShortcutsListView: View {
             ScrollView {
                 LazyVGrid(columns: [
                     GridItem(.flexible(), spacing: 14),
-                    GridItem(.flexible(), spacing: 14)
+                    GridItem(.flexible(), spacing: 14),
                 ], spacing: 14) {
                     // Recording Hotkeys
                     if hotkeyManager.selectedHotkey1 != .none {
@@ -170,7 +170,7 @@ struct KeyboardShortcutsListView: View {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color(NSColor.windowBackgroundColor),
-                        Color(NSColor.controlBackgroundColor).opacity(0.3)
+                        Color(NSColor.controlBackgroundColor).opacity(0.3),
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -199,12 +199,13 @@ struct KeyboardShortcutsListView: View {
 }
 
 // MARK: - Shortcut Card
+
 private struct ShortcutCard<Content: View>: View {
     let title: String
     let subtitle: String
     let shortcutView: Content
 
-    init(icon: String = "", iconColor: Color = .clear, title: String, subtitle: String, @ViewBuilder shortcutView: () -> Content) {
+    init(icon _: String = "", iconColor _: Color = .clear, title: String, subtitle: String, @ViewBuilder shortcutView: () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.shortcutView = shortcutView()
@@ -237,7 +238,7 @@ private struct ShortcutCard<Content: View>: View {
                     LinearGradient(
                         gradient: Gradient(colors: [
                             Color(NSColor.controlBackgroundColor).opacity(0.7),
-                            Color(NSColor.controlBackgroundColor).opacity(0.5)
+                            Color(NSColor.controlBackgroundColor).opacity(0.5),
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -250,7 +251,7 @@ private struct ShortcutCard<Content: View>: View {
                     LinearGradient(
                         gradient: Gradient(colors: [
                             Color(NSColor.separatorColor).opacity(0.5),
-                            Color(NSColor.separatorColor).opacity(0.3)
+                            Color(NSColor.separatorColor).opacity(0.3),
                         ]),
                         startPoint: .top,
                         endPoint: .bottom
@@ -263,6 +264,7 @@ private struct ShortcutCard<Content: View>: View {
 }
 
 // MARK: - Badge Components
+
 private struct KeyboardShortcutBadge: View {
     let shortcut: KeyboardShortcuts.Shortcut
 
@@ -361,7 +363,7 @@ private struct KeyBadge: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.controlBackgroundColor).opacity(isEnabled ? 0.9 : 0.6),
-                                Color(NSColor.controlBackgroundColor).opacity(isEnabled ? 0.7 : 0.5)
+                                Color(NSColor.controlBackgroundColor).opacity(isEnabled ? 0.7 : 0.5),
                             ]),
                             startPoint: .top,
                             endPoint: .bottom
@@ -395,7 +397,7 @@ private struct HotkeyBadge: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.controlBackgroundColor).opacity(0.9),
-                                Color(NSColor.controlBackgroundColor).opacity(0.7)
+                                Color(NSColor.controlBackgroundColor).opacity(0.7),
                             ]),
                             startPoint: .top,
                             endPoint: .bottom
@@ -428,7 +430,7 @@ private struct MouseBadge: View {
                     LinearGradient(
                         gradient: Gradient(colors: [
                             Color(NSColor.controlBackgroundColor).opacity(0.9),
-                            Color(NSColor.controlBackgroundColor).opacity(0.7)
+                            Color(NSColor.controlBackgroundColor).opacity(0.7),
                         ]),
                         startPoint: .top,
                         endPoint: .bottom

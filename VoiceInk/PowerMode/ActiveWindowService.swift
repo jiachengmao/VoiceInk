@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 import os
 
 class ActiveWindowService: ObservableObject {
@@ -8,25 +8,26 @@ class ActiveWindowService: ObservableObject {
     private var enhancementService: AIEnhancementService?
     private let browserURLService = BrowserURLService.shared
     private var whisperState: WhisperState?
-    
+
     private let logger = Logger(
         subsystem: "com.prakashjoshipax.voiceink",
         category: "browser.detection"
     )
-    
+
     private init() {}
-    
+
     func configure(with enhancementService: AIEnhancementService) {
         self.enhancementService = enhancementService
     }
-    
+
     func configureWhisperState(_ whisperState: WhisperState) {
         self.whisperState = whisperState
     }
-    
+
     func applyConfigurationForCurrentApp() async {
         guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
-              let bundleIdentifier = frontmostApp.bundleIdentifier else {
+              let bundleIdentifier = frontmostApp.bundleIdentifier
+        else {
             return
         }
 
@@ -64,4 +65,4 @@ class ActiveWindowService: ObservableObject {
             // If no config found, keep the current active configuration (don't clear it)
         }
     }
-} 
+}

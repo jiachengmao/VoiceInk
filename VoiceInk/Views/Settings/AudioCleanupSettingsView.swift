@@ -1,9 +1,9 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct AudioCleanupSettingsView: View {
     @EnvironmentObject private var whisperState: WhisperState
-    
+
     // Audio cleanup settings
     @AppStorage("IsTranscriptionCleanupEnabled") private var isTranscriptionCleanupEnabled = false
     @AppStorage("TranscriptionRetentionMinutes") private var transcriptionRetentionMinutes = 24 * 60
@@ -15,18 +15,18 @@ struct AudioCleanupSettingsView: View {
     @State private var showResultAlert = false
     @State private var cleanupResult: (deletedCount: Int, errorCount: Int) = (0, 0)
     @State private var showTranscriptCleanupResult = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Control how VoiceInk handles your transcription data and audio recordings for privacy and storage management.")
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Toggle("Automatically delete transcript history", isOn: $isTranscriptionCleanupEnabled)
                 .toggleStyle(.switch)
                 .padding(.vertical, 4)
-            
+
             if isTranscriptionCleanupEnabled {
                 VStack(alignment: .leading, spacing: 8) {
                     Picker("Delete transcripts older than", selection: $transcriptionRetentionMinutes) {
@@ -60,7 +60,7 @@ struct AudioCleanupSettingsView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.large)
                     .alert("Transcript Cleanup", isPresented: $showTranscriptCleanupResult) {
-                        Button("OK", role: .cancel) { }
+                        Button("OK", role: .cancel) {}
                     } message: {
                         Text("Cleanup triggered. Old transcripts are cleaned up according to your retention setting.")
                     }
@@ -84,7 +84,7 @@ struct AudioCleanupSettingsView: View {
                         Text("30 days").tag(30)
                     }
                     .pickerStyle(.menu)
-                    
+
                     Text("Audio files older than the selected period will be automatically deleted, while keeping the text transcripts intact.")
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
@@ -92,7 +92,7 @@ struct AudioCleanupSettingsView: View {
                         .padding(.top, 2)
                 }
                 .padding(.vertical, 4)
-                
+
                 Button(action: {
                     // Start by analyzing what would be cleaned up
                     Task {
@@ -100,10 +100,10 @@ struct AudioCleanupSettingsView: View {
                         await MainActor.run {
                             isPerformingCleanup = true
                         }
-                        
+
                         // Get cleanup info
                         let info = await AudioCleanupManager.shared.getCleanupInfo(modelContext: whisperState.modelContext)
-                        
+
                         // Update UI with results
                         await MainActor.run {
                             cleanupInfo = info
@@ -127,8 +127,8 @@ struct AudioCleanupSettingsView: View {
                 .controlSize(.large)
                 .disabled(isPerformingCleanup)
                 .alert("Audio Cleanup", isPresented: $isShowingConfirmation) {
-                    Button("Cancel", role: .cancel) { }
-                    
+                    Button("Cancel", role: .cancel) {}
+
                     if cleanupInfo.fileCount > 0 {
                         Button("Delete \(cleanupInfo.fileCount) Files", role: .destructive) {
                             Task {
@@ -136,13 +136,13 @@ struct AudioCleanupSettingsView: View {
                                 await MainActor.run {
                                     isPerformingCleanup = true
                                 }
-                                
+
                                 // Perform cleanup
                                 let result = await AudioCleanupManager.shared.runCleanupForTranscriptions(
-                                    modelContext: whisperState.modelContext, 
+                                    modelContext: whisperState.modelContext,
                                     transcriptions: cleanupInfo.transcriptions
                                 )
-                                
+
                                 // Update UI with results
                                 await MainActor.run {
                                     cleanupResult = result
@@ -164,7 +164,7 @@ struct AudioCleanupSettingsView: View {
                     }
                 }
                 .alert("Cleanup Complete", isPresented: $showResultAlert) {
-                    Button("OK", role: .cancel) { }
+                    Button("OK", role: .cancel) {}
                 } message: {
                     if cleanupResult.errorCount > 0 {
                         Text("Successfully deleted \(cleanupResult.deletedCount) audio files. Failed to delete \(cleanupResult.errorCount) files.")
@@ -182,4 +182,4 @@ struct AudioCleanupSettingsView: View {
             }
         }
     }
-} 
+}

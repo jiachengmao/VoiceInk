@@ -1,6 +1,6 @@
 import Foundation
 
-// Enum to differentiate between model providers
+/// Enum to differentiate between model providers
 enum ModelProvider: String, Codable, Hashable, CaseIterable {
     case local = "Local"
     case parakeet = "Parakeet"
@@ -15,14 +15,14 @@ enum ModelProvider: String, Codable, Hashable, CaseIterable {
     // Future providers can be added here
 }
 
-// A unified protocol for any transcription model
+/// A unified protocol for any transcription model
 protocol TranscriptionModel: Identifiable, Hashable {
     var id: UUID { get }
     var name: String { get }
     var displayName: String { get }
     var description: String { get }
     var provider: ModelProvider { get }
-    
+
     // Language capabilities
     var isMultilingualModel: Bool { get }
     var supportedLanguages: [String: String] { get }
@@ -32,13 +32,13 @@ extension TranscriptionModel {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     var language: String {
         isMultilingualModel ? "Multilingual" : "English-only"
     }
 }
 
-// A new struct for Apple's native models
+/// A new struct for Apple's native models
 struct NativeAppleModel: TranscriptionModel {
     let id = UUID()
     let name: String
@@ -49,7 +49,7 @@ struct NativeAppleModel: TranscriptionModel {
     let supportedLanguages: [String: String]
 }
 
-// A new struct for Parakeet models
+/// A new struct for Parakeet models
 struct ParakeetModel: TranscriptionModel {
     let id = UUID()
     let name: String
@@ -63,10 +63,11 @@ struct ParakeetModel: TranscriptionModel {
     var isMultilingualModel: Bool {
         supportedLanguages.count > 1
     }
+
     let supportedLanguages: [String: String]
 }
 
-// A new struct for cloud models
+/// A new struct for cloud models
 struct CloudModel: TranscriptionModel {
     let id: UUID
     let name: String
@@ -86,12 +87,12 @@ struct CloudModel: TranscriptionModel {
         self.provider = provider
         self.speed = speed
         self.accuracy = accuracy
-        self.isMultilingualModel = isMultilingual
+        isMultilingualModel = isMultilingual
         self.supportedLanguages = supportedLanguages
     }
 }
 
-// A new struct for custom cloud models
+/// A new struct for custom cloud models
 struct CustomCloudModel: TranscriptionModel, Codable {
     let id: UUID
     let name: String
@@ -112,10 +113,10 @@ struct CustomCloudModel: TranscriptionModel, Codable {
         self.apiEndpoint = apiEndpoint
         self.apiKey = apiKey
         self.modelName = modelName
-        self.isMultilingualModel = isMultilingual
+        isMultilingualModel = isMultilingual
         self.supportedLanguages = supportedLanguages ?? PredefinedModels.getLanguageDictionary(isMultilingual: isMultilingual)
     }
-} 
+}
 
 struct LocalModel: TranscriptionModel {
     let id = UUID()
@@ -140,9 +141,9 @@ struct LocalModel: TranscriptionModel {
     var isMultilingualModel: Bool {
         supportedLanguages.count > 1
     }
-} 
+}
 
-// User-imported local models 
+/// User-imported local models
 struct ImportedLocalModel: TranscriptionModel {
     let id = UUID()
     let name: String
@@ -153,10 +154,10 @@ struct ImportedLocalModel: TranscriptionModel {
     let supportedLanguages: [String: String]
 
     init(fileBaseName: String) {
-        self.name = fileBaseName
-        self.displayName = fileBaseName
-        self.description = "Imported local model"
-        self.isMultilingualModel = true
-        self.supportedLanguages = PredefinedModels.getLanguageDictionary(isMultilingual: true, provider: .local)
+        name = fileBaseName
+        displayName = fileBaseName
+        description = "Imported local model"
+        isMultilingualModel = true
+        supportedLanguages = PredefinedModels.getLanguageDictionary(isMultilingual: true, provider: .local)
     }
 }

@@ -6,7 +6,7 @@ struct MetricCard: View {
     let value: String
     let detail: String?
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 12) {
@@ -20,18 +20,18 @@ struct MetricCard: View {
                         .foregroundColor(color)
                 }
                 .frame(width: 34, height: 34)
-                
+
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            
+
             Text(value)
                 .font(.system(size: 24, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-            
+
             if let detail, !detail.isEmpty {
                 Text(detail)
                     .font(.system(size: 11))

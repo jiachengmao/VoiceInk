@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Define a display mode for flexible usage
+/// Define a display mode for flexible usage
 enum LanguageDisplayMode {
     case full // For settings page with descriptions
     case menuItem // For menu bar with compact layout
@@ -24,8 +24,8 @@ struct LanguageSelectionView: View {
         NotificationCenter.default.post(name: .languageDidChange, object: nil)
         NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
     }
-    
-    // Function to check if current model is multilingual
+
+    /// Function to check if current model is multilingual
     private func isMultilingualModel() -> Bool {
         guard let currentModel = whisperState.currentTranscriptionModel else {
             return false
@@ -40,7 +40,7 @@ struct LanguageSelectionView: View {
         return provider == .parakeet || provider == .gemini
     }
 
-    // Function to get current model's supported languages
+    /// Function to get current model's supported languages
     private func getCurrentModelLanguages() -> [String: String] {
         guard let currentModel = whisperState.currentTranscriptionModel else {
             return ["en": "English"] // Default to English if no model found
@@ -48,7 +48,7 @@ struct LanguageSelectionView: View {
         return currentModel.supportedLanguages
     }
 
-    // Get the display name of the current language
+    /// Get the display name of the current language
     private func currentLanguageDisplayName() -> String {
         return getCurrentModelLanguages()[selectedLanguage] ?? "Unknown"
     }
@@ -62,20 +62,19 @@ struct LanguageSelectionView: View {
         }
     }
 
-    // The original full view layout for settings page
+    /// The original full view layout for settings page
     private var fullView: some View {
         VStack(alignment: .leading, spacing: 16) {
             languageSelectionSection
         }
     }
-    
+
     private var languageSelectionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Transcription Language")
                 .font(.headline)
 
-            if let currentModel = whisperState.currentTranscriptionModel
-            {
+            if let currentModel = whisperState.currentTranscriptionModel {
                 if languageSelectionDisabled() {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Language: Autodetected")
@@ -105,7 +104,7 @@ struct LanguageSelectionView: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .onChange(of: selectedLanguage) { oldValue, newValue in
+                        .onChange(of: selectedLanguage) { _, newValue in
                             updateLanguage(newValue)
                         }
 
@@ -153,7 +152,7 @@ struct LanguageSelectionView: View {
         .cornerRadius(10)
     }
 
-    // New compact view for menu bar
+    /// New compact view for menu bar
     private var menuItemView: some View {
         Group {
             if languageSelectionDisabled() {

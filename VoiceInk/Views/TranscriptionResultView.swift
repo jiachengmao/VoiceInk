@@ -7,9 +7,9 @@ enum TranscriptionTab: String, CaseIterable {
 
 struct TranscriptionResultView: View {
     let transcription: Transcription
-    
+
     @State private var selectedTab: TranscriptionTab = .original
-    
+
     private var availableTabs: [TranscriptionTab] {
         var tabs: [TranscriptionTab] = [.original]
         if transcription.enhancedText != nil {
@@ -17,7 +17,7 @@ struct TranscriptionResultView: View {
         }
         return tabs
     }
-    
+
     private var textForSelectedTab: String {
         switch selectedTab {
         case .original:
@@ -26,12 +26,12 @@ struct TranscriptionResultView: View {
             return transcription.enhancedText ?? ""
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Transcription Result")
                 .font(.headline)
-            
+
             if availableTabs.count > 1 {
                 HStack(spacing: 2) {
                     ForEach(availableTabs, id: \.self) { tab in
@@ -54,13 +54,13 @@ struct TranscriptionResultView: View {
                     AnimatedSaveButton(textToSave: textForSelectedTab)
                 }
             }
-            
+
             ScrollView {
                 Text(textForSelectedTab)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
+
             HStack {
                 Text("Duration: \(formatDuration(transcription.duration))")
                     .font(.caption)
@@ -70,18 +70,18 @@ struct TranscriptionResultView: View {
         }
         .padding()
     }
-    
+
     private func formatDuration(_ duration: TimeInterval) -> String {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
-    
+
     private struct TabButton: View {
         let title: String
         let isSelected: Bool
         let action: () -> Void
-        
+
         var body: some View {
             Button(action: action) {
                 Text(title)

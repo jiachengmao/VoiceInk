@@ -36,7 +36,7 @@ struct ExperimentalFeaturesSection: View {
                 Divider()
                     .padding(.vertical, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                
+
                 Toggle(isOn: $playbackController.isPauseMediaEnabled) {
                     Text("Pause Media during recording")
                 }

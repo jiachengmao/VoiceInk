@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 import UniformTypeIdentifiers
 
 struct DictionaryExportData: Codable {
@@ -19,7 +19,8 @@ class DictionaryImportExportService {
     func exportDictionary() {
         var dictionaryWords: [String] = []
         if let data = UserDefaults.standard.data(forKey: dictionaryItemsKey),
-           let items = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
+           let items = try? JSONDecoder().decode([DictionaryItem].self, from: data)
+        {
             dictionaryWords = items.map { $0.word }
         }
 
@@ -62,7 +63,7 @@ class DictionaryImportExportService {
                 }
             }
         } catch {
-            self.showAlert(title: "Export Error", message: "Could not encode dictionary data: \(error.localizedDescription)")
+            showAlert(title: "Export Error", message: "Could not encode dictionary data: \(error.localizedDescription)")
         }
     }
 
@@ -90,7 +91,8 @@ class DictionaryImportExportService {
 
                     var existingItems: [DictionaryItem] = []
                     if let data = UserDefaults.standard.data(forKey: self.dictionaryItemsKey),
-                       let items = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
+                       let items = try? JSONDecoder().decode([DictionaryItem].self, from: data)
+                    {
                         existingItems = items
                     }
 

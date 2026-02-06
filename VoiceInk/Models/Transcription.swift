@@ -39,11 +39,12 @@ final class Transcription {
          aiRequestUserMessage: String? = nil,
          powerModeName: String? = nil,
          powerModeEmoji: String? = nil,
-         transcriptionStatus: TranscriptionStatus = .pending) {
-        self.id = UUID()
+         transcriptionStatus: TranscriptionStatus = .pending)
+    {
+        id = UUID()
         self.text = text
         self.enhancedText = enhancedText
-        self.timestamp = Date()
+        timestamp = Date()
         self.duration = duration
         self.audioFileURL = audioFileURL
         self.transcriptionModelName = transcriptionModelName

@@ -4,8 +4,8 @@ extension View {
     func placeholder<Content: View>(
         when shouldShow: Bool,
         alignment: Alignment = .center,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-
+        @ViewBuilder placeholder: () -> Content
+    ) -> some View {
         ZStack(alignment: alignment) {
             placeholder().opacity(shouldShow ? 1 : 0)
             self
@@ -16,34 +16,34 @@ extension View {
 enum ConfigurationMode: Hashable {
     case add
     case edit(PowerModeConfig)
-    
+
     var isAdding: Bool {
         if case .add = self { return true }
         return false
     }
-    
+
     var title: String {
         switch self {
         case .add: return "Add Power Mode"
         case .edit: return "Edit Power Mode"
         }
     }
-    
+
     func hash(into hasher: inout Hasher) {
         switch self {
         case .add:
             hasher.combine(0)
-        case .edit(let config):
+        case let .edit(config):
             hasher.combine(1)
             hasher.combine(config.id)
         }
     }
-    
+
     static func == (lhs: ConfigurationMode, rhs: ConfigurationMode) -> Bool {
         switch (lhs, rhs) {
         case (.add, .add):
             return true
-        case (.edit(let lhsConfig), .edit(let rhsConfig)):
+        case let (.edit(lhsConfig), .edit(rhsConfig)):
             return lhsConfig.id == rhsConfig.id
         default:
             return false
@@ -65,7 +65,7 @@ struct PowerModeView: View {
     @State private var configurationMode: ConfigurationMode?
     @State private var navigationPath = NavigationPath()
     @State private var isReorderMode = false
-    
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
@@ -76,21 +76,21 @@ struct PowerModeView: View {
                                 Text("Power Modes")
                                     .font(.system(size: 28, weight: .bold, design: .default))
                                     .foregroundColor(.primary)
-                                
-                                                                 InfoTip(
-                                     title: "What is Power Mode?",
-                                     message: "Automatically apply custom configurations based on the app/website you are using",
-                                     learnMoreURL: "https://www.youtube.com/@tryvoiceink/videos"
-                                 )
+
+                                InfoTip(
+                                    title: "What is Power Mode?",
+                                    message: "Automatically apply custom configurations based on the app/website you are using",
+                                    learnMoreURL: "https://www.youtube.com/@tryvoiceink/videos"
+                                )
                             }
-                            
+
                             Text("Automate your workflows with context-aware configurations.")
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         HStack(spacing: 8) {
                             if !isReorderMode {
                                 Button(action: {
@@ -135,12 +135,12 @@ struct PowerModeView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+
                 Rectangle()
                     .fill(Color(NSColor.separatorColor))
                     .frame(height: 1)
                     .padding(.horizontal, 24)
-                
+
                 if isReorderMode {
                     VStack(spacing: 12) {
                         List {
@@ -206,17 +206,17 @@ struct PowerModeView: View {
                                     VStack(spacing: 24) {
                                         Spacer()
                                             .frame(height: geometry.size.height * 0.2)
-                                        
+
                                         VStack(spacing: 16) {
                                             Image(systemName: "square.grid.2x2.fill")
                                                 .font(.system(size: 48, weight: .regular))
                                                 .foregroundColor(.secondary.opacity(0.6))
-                                            
+
                                             VStack(spacing: 8) {
                                                 Text("No Power Modes Yet")
                                                     .font(.system(size: 20, weight: .medium))
                                                     .foregroundColor(.primary)
-                                                
+
                                                 Text("Create first power mode to automate your VoiceInk workflow based on apps/website you are using")
                                                     .font(.system(size: 14))
                                                     .foregroundColor(.secondary)
@@ -224,7 +224,7 @@ struct PowerModeView: View {
                                                     .lineSpacing(2)
                                             }
                                         }
-                                        
+
                                         Spacer()
                                     }
                                     .frame(maxWidth: .infinity)
@@ -240,7 +240,7 @@ struct PowerModeView: View {
                                         )
                                         .padding(.horizontal, 24)
                                         .padding(.vertical, 20)
-                                        
+
                                         Spacer()
                                             .frame(height: 40)
                                     }
@@ -258,12 +258,10 @@ struct PowerModeView: View {
     }
 }
 
-
-
-// New component for section headers
+/// New component for section headers
 struct SectionHeader: View {
     let title: String
-    
+
     var body: some View {
         Text(title)
             .font(.system(size: 16, weight: .bold))

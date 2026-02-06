@@ -4,7 +4,7 @@ struct VoiceInkButton: View {
     let title: String
     let action: () -> Void
     var isDisabled: Bool = false
-    
+
     var body: some View {
         Button(action: action) {
             Text(title)
@@ -24,21 +24,21 @@ struct VoiceInkButton: View {
 
 struct PowerModeEmptyStateView: View {
     let action: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "bolt.circle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
-            
+
             Text("No Power Modes")
                 .font(.title2)
                 .fontWeight(.semibold)
-            
+
             Text("Add customized power modes for different contexts")
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-            
+
             VoiceInkButton(
                 title: "Add New Power Mode",
                 action: action
@@ -53,7 +53,7 @@ struct PowerModeConfigurationsGrid: View {
     @ObservedObject var powerModeManager: PowerModeManager
     let onEditConfig: (PowerModeConfig) -> Void
     @EnvironmentObject var enhancementService: AIEnhancementService
-    
+
     var body: some View {
         LazyVStack(spacing: 12) {
             ForEach($powerModeManager.configurations) { $config in
@@ -77,59 +77,66 @@ struct ConfigurationRow: View {
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var whisperState: WhisperState
     @State private var isHovering = false
-    
+
     private let maxAppIconsToShow = 5
-    
+
     private var selectedPrompt: CustomPrompt? {
         guard let promptId = config.selectedPrompt,
               let uuid = UUID(uuidString: promptId) else { return nil }
         return enhancementService.allPrompts.first { $0.id == uuid }
     }
-    
+
     private var selectedModel: String? {
         if let modelName = config.selectedTranscriptionModelName,
-           let model = whisperState.allAvailableModels.first(where: { $0.name == modelName }) {
+           let model = whisperState.allAvailableModels.first(where: { $0.name == modelName })
+        {
             return model.displayName
         }
         return "Default"
     }
-    
+
     private var selectedLanguage: String? {
         if let langCode = config.selectedLanguage {
             if langCode == "auto" { return "Auto" }
             if langCode == "en" { return "English" }
-            
+
             if let modelName = config.selectedTranscriptionModelName,
                let model = whisperState.allAvailableModels.first(where: { $0.name == modelName }),
-               let langName = model.supportedLanguages[langCode] {
+               let langName = model.supportedLanguages[langCode]
+            {
                 return langName
             }
             return langCode.uppercased()
         }
         return "Default"
     }
-    
-    private var appCount: Int { return config.appConfigs?.count ?? 0 }
-    private var websiteCount: Int { return config.urlConfigs?.count ?? 0 }
-    
+
+    private var appCount: Int {
+        return config.appConfigs?.count ?? 0
+    }
+
+    private var websiteCount: Int {
+        return config.urlConfigs?.count ?? 0
+    }
+
     private var websiteText: String {
         if websiteCount == 0 { return "" }
         return websiteCount == 1 ? "1 Website" : "\(websiteCount) Websites"
     }
-    
+
     private var appText: String {
         if appCount == 0 { return "" }
         return appCount == 1 ? "1 App" : "\(appCount) Apps"
     }
-    
+
     private var extraAppsCount: Int {
         return max(0, appCount - maxAppIconsToShow)
     }
-    
+
     private var visibleAppConfigs: [AppConfig] {
         return Array(config.appConfigs?.prefix(maxAppIconsToShow) ?? [])
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -137,16 +144,16 @@ struct ConfigurationRow: View {
                     Circle()
                         .fill(Color(NSColor.controlBackgroundColor))
                         .frame(width: 40, height: 40)
-                    
+
                     Text(config.emoji)
                         .font(.system(size: 20))
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(config.name)
                             .font(.system(size: 15, weight: .semibold))
-                        
+
                         if config.isDefault {
                             Text("Default")
                                 .font(.system(size: 11, weight: .medium))
@@ -156,7 +163,7 @@ struct ConfigurationRow: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    
+
                     HStack(spacing: 12) {
                         if appCount > 0 {
                             HStack(spacing: 4) {
@@ -166,7 +173,7 @@ struct ConfigurationRow: View {
                                     .font(.caption2)
                             }
                         }
-                        
+
                         if websiteCount > 0 {
                             HStack(spacing: 4) {
                                 Image(systemName: "globe")
@@ -178,9 +185,9 @@ struct ConfigurationRow: View {
                     }
                     .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Toggle("", isOn: $config.isEnabled)
                     .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                     .labelsHidden()
@@ -190,11 +197,11 @@ struct ConfigurationRow: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 14)
-            
+
             if selectedModel != nil || selectedLanguage != nil || config.isAIEnhancementEnabled || config.isAutoSendEnabled {
                 Divider()
                     .padding(.horizontal, 16)
-                
+
                 HStack(spacing: 8) {
                     if let model = selectedModel, model != "Default" {
                         HStack(spacing: 4) {
@@ -212,7 +219,7 @@ struct ConfigurationRow: View {
                                 .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
                         )
                     }
-                    
+
                     if let language = selectedLanguage, language != "Default" {
                         HStack(spacing: 4) {
                             Image(systemName: "globe")
@@ -229,7 +236,7 @@ struct ConfigurationRow: View {
                                 .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
                         )
                     }
-                    
+
                     if config.isAIEnhancementEnabled, let modelName = config.selectedAIModel, !modelName.isEmpty {
                         HStack(spacing: 4) {
                             Image(systemName: "cpu")
@@ -246,7 +253,7 @@ struct ConfigurationRow: View {
                                 .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
                         )
                     }
-                    
+
                     if config.isAutoSendEnabled {
                         HStack(spacing: 4) {
                             Image(systemName: "keyboard")
@@ -280,7 +287,7 @@ struct ConfigurationRow: View {
                                     .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
                             )
                         }
-                        
+
                         HStack(spacing: 4) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 10))
@@ -299,42 +306,41 @@ struct ConfigurationRow: View {
                 .padding(.vertical, 10)
                 .padding(.horizontal, 16)
             }
-    }
-    .background(CardBackground(isSelected: isEditing))
-    .opacity(config.isEnabled ? 1.0 : 0.5)
-
-    .onHover { hovering in
-        withAnimation(.easeInOut(duration: 0.15)) {
-            isHovering = hovering
         }
-    }
-    .onTapGesture(count: 2) {
-        onEditConfig(config)
-    }
-    .contextMenu {
-        Button(action: {
-            onEditConfig(config)
-        }) {
-            Label("Edit", systemImage: "pencil")
-        }
-        Button(role: .destructive, action: {
-            let alert = NSAlert()
-            alert.messageText = "Delete Power Mode?"
-            alert.informativeText = "Are you sure you want to delete the '\(config.name)' power mode? This action cannot be undone."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "Delete")
-            alert.addButton(withTitle: "Cancel")
-            alert.buttons[0].hasDestructiveAction = true
-            
-            if alert.runModal() == .alertFirstButtonReturn {
-                powerModeManager.removeConfiguration(with: config.id)
+        .background(CardBackground(isSelected: isEditing))
+        .opacity(config.isEnabled ? 1.0 : 0.5)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
             }
-        }) {
-            Label("Delete", systemImage: "trash")
+        }
+        .onTapGesture(count: 2) {
+            onEditConfig(config)
+        }
+        .contextMenu {
+            Button(action: {
+                onEditConfig(config)
+            }) {
+                Label("Edit", systemImage: "pencil")
+            }
+            Button(role: .destructive, action: {
+                let alert = NSAlert()
+                alert.messageText = "Delete Power Mode?"
+                alert.informativeText = "Are you sure you want to delete the '\(config.name)' power mode? This action cannot be undone."
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "Delete")
+                alert.addButton(withTitle: "Cancel")
+                alert.buttons[0].hasDestructiveAction = true
+
+                if alert.runModal() == .alertFirstButtonReturn {
+                    powerModeManager.removeConfiguration(with: config.id)
+                }
+            }) {
+                Label("Delete", systemImage: "trash")
+            }
         }
     }
-    }
-    
+
     private var isSelected: Bool {
         return isEditing
     }
@@ -342,7 +348,7 @@ struct ConfigurationRow: View {
 
 struct PowerModeAppIcon: View {
     let bundleId: String
-    
+
     var body: some View {
         if let appUrl = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: appUrl.path))
@@ -362,7 +368,7 @@ struct AppGridItem: View {
     let app: (url: URL, name: String, bundleId: String, icon: NSImage)
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {

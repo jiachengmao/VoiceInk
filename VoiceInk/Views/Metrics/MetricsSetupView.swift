@@ -1,12 +1,12 @@
-import SwiftUI
 import KeyboardShortcuts
+import SwiftUI
 
 struct MetricsSetupView: View {
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @State private var isAccessibilityEnabled = AXIsProcessTrusted()
     @State private var isScreenRecordingEnabled = CGPreflightScreenCaptureAccess()
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -15,12 +15,12 @@ struct MetricsSetupView: View {
                     AppIconView()
                         .frame(width: 80, height: 80)
                         .padding(.bottom, 20)
-                       
+
                     VStack(spacing: 4) {
                         Text("Welcome to VoiceInk")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
-                        
+
                         Text("Complete the setup to get started")
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
@@ -29,10 +29,10 @@ struct MetricsSetupView: View {
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 20)
-                
+
                 // Setup Steps
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(0..<4) { index in
+                    ForEach(0 ..< 4) { index in
                         setupStep(for: index)
                         if index < 3 {
                             Divider().padding(.leading, 70)
@@ -46,13 +46,13 @@ struct MetricsSetupView: View {
                         .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                 )
                 .padding(.horizontal)
-                
+
                 Spacer(minLength: 20)
-                
+
                 // Action Button
                 actionButton
                     .frame(maxWidth: 400)
-                
+
                 // Help Text
                 helpText
             }
@@ -61,10 +61,10 @@ struct MetricsSetupView: View {
         .frame(minWidth: 500, minHeight: 600)
         .background(Color(NSColor.controlBackgroundColor))
     }
-    
+
     private func setupStep(for index: Int) -> some View {
         let stepInfo: (isCompleted: Bool, icon: String, title: String, description: String)
-        
+
         switch index {
         case 0:
             stepInfo = (
@@ -95,7 +95,7 @@ struct MetricsSetupView: View {
                 description: "Choose an AI model to start transcribing."
             )
         }
-        
+
         return HStack(spacing: 16) {
             Image(systemName: stepInfo.icon)
                 .font(.system(size: 18))
@@ -103,7 +103,7 @@ struct MetricsSetupView: View {
                 .background((stepInfo.isCompleted ? Color.green : Color.accentColor).opacity(0.1))
                 .foregroundColor(stepInfo.isCompleted ? .green : Color.accentColor)
                 .clipShape(Circle())
-            
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(stepInfo.title)
                     .font(.headline)
@@ -112,9 +112,9 @@ struct MetricsSetupView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             if stepInfo.isCompleted {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 24))
@@ -127,7 +127,7 @@ struct MetricsSetupView: View {
         }
         .padding()
     }
-    
+
     private var actionButton: some View {
         Button(action: handleActionButton) {
             HStack {
@@ -144,7 +144,7 @@ struct MetricsSetupView: View {
         .buttonStyle(.plain)
         .shadow(color: Color.accentColor.opacity(0.3), radius: 8, y: 4)
     }
-    
+
     private func handleActionButton() {
         if isShortcutAndAccessibilityGranted {
             openModelManagement()
@@ -165,7 +165,7 @@ struct MetricsSetupView: View {
             }
         }
     }
-    
+
     private func getActionButtonTitle() -> String {
         if hotkeyManager.selectedHotkey1 == .none {
             return "Configure Shortcut"
@@ -178,19 +178,19 @@ struct MetricsSetupView: View {
         }
         return "Get Started"
     }
-    
+
     private var helpText: some View {
         Text("Need help? Check the Help menu for support options")
             .font(.caption)
             .foregroundColor(.secondary)
     }
-    
+
     private var isShortcutAndAccessibilityGranted: Bool {
         hotkeyManager.selectedHotkey1 != .none &&
-        AXIsProcessTrusted() && 
-        CGPreflightScreenCaptureAccess()
+            AXIsProcessTrusted() &&
+            CGPreflightScreenCaptureAccess()
     }
-    
+
     private func openSettings() {
         NotificationCenter.default.post(
             name: .navigateToDestination,
@@ -198,7 +198,7 @@ struct MetricsSetupView: View {
             userInfo: ["destination": "Settings"]
         )
     }
-    
+
     private func openModelManagement() {
         NotificationCenter.default.post(
             name: .navigateToDestination,
@@ -207,4 +207,3 @@ struct MetricsSetupView: View {
         )
     }
 }
-

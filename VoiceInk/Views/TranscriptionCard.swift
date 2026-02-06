@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 enum ContentTab: String, CaseIterable {
     case original = "Original"
@@ -31,7 +31,8 @@ struct TranscriptionCard: View {
     private var hasAudioFile: Bool {
         if let urlString = transcription.audioFileURL,
            let url = URL(string: urlString),
-           FileManager.default.fileExists(atPath: url.path) {
+           FileManager.default.fileExists(atPath: url.path)
+        {
             return true
         }
         return false
@@ -74,7 +75,6 @@ struct TranscriptionCard: View {
 
     private var aiRequestContentView: some View {
         VStack(alignment: .leading, spacing: 12) {
-
             if let systemMsg = transcription.aiRequestSystemMessage, !systemMsg.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("System Prompt")
@@ -136,7 +136,7 @@ struct TranscriptionCard: View {
             ))
             .toggleStyle(CircularCheckboxStyle())
             .labelsHidden()
-            
+
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(transcription.timestamp, format: .dateTime.month(.abbreviated).day().year().hour().minute())
@@ -189,7 +189,8 @@ struct TranscriptionCard: View {
                     .cornerRadius(8)
 
                     if hasAudioFile, let urlString = transcription.audioFileURL,
-                       let url = URL(string: urlString) {
+                       let url = URL(string: urlString)
+                    {
                         Divider()
                             .padding(.vertical, 8)
                         AudioPlayerView(url: url)
@@ -261,7 +262,7 @@ struct TranscriptionCard: View {
                 Label("Delete", systemImage: "trash")
             }
         }
-        .onChange(of: isExpanded) { oldValue, newValue in
+        .onChange(of: isExpanded) { _, newValue in
             if newValue {
                 selectedTab = transcription.enhancedText != nil ? .enhanced : .original
             }
@@ -270,14 +271,14 @@ struct TranscriptionCard: View {
 
     private var hasMetadata: Bool {
         transcription.powerModeName != nil ||
-        transcription.powerModeEmoji != nil ||
-        transcription.transcriptionModelName != nil ||
-        transcription.aiEnhancementModelName != nil ||
-        transcription.promptName != nil ||
-        transcription.transcriptionDuration != nil ||
-        transcription.enhancementDuration != nil
+            transcription.powerModeEmoji != nil ||
+            transcription.transcriptionModelName != nil ||
+            transcription.aiEnhancementModelName != nil ||
+            transcription.promptName != nil ||
+            transcription.transcriptionDuration != nil ||
+            transcription.enhancementDuration != nil
     }
-    
+
     private func formatTiming(_ duration: TimeInterval) -> String {
         if duration < 1 {
             return String(format: "%.0fms", duration * 1000)
@@ -289,14 +290,14 @@ struct TranscriptionCard: View {
         let seconds = duration.truncatingRemainder(dividingBy: 60)
         return String(format: "%dm %.0fs", minutes, seconds)
     }
-    
+
     private func metadataRow(icon: String, label: String, value: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
                 .frame(width: 20, alignment: .center)
-            
+
             Text(label)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.primary)

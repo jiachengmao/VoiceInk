@@ -7,7 +7,7 @@ struct ConfigurationView: View {
     @EnvironmentObject var aiService: AIService
     @Environment(\.presentationMode) private var presentationMode
     @FocusState private var isNameFieldFocused: Bool
-    
+
     // State for configuration
     @State private var configName: String = "New Power Mode"
     @State private var selectedEmoji: String = "💼"
@@ -19,25 +19,25 @@ struct ConfigurationView: View {
     @State private var selectedLanguage: String?
     @State private var installedApps: [(url: URL, name: String, bundleId: String, icon: NSImage)] = []
     @State private var searchText = ""
-    
+
     // Validation state
     @State private var validationErrors: [PowerModeValidationError] = []
     @State private var showValidationAlert = false
-    
+
     // New state for AI provider and model
     @State private var selectedAIProvider: String?
     @State private var selectedAIModel: String?
-    
+
     // App and Website configurations
     @State private var selectedAppConfigs: [AppConfig] = []
     @State private var websiteConfigs: [URLConfig] = []
     @State private var newWebsiteURL: String = ""
-    
+
     // New state for screen capture toggle
     @State private var useScreenCapture = false
     @State private var isAutoSendEnabled = false
     @State private var isDefault = false
-    
+
     // State for prompt editing (similar to EnhancementSettingsView)
     @State private var isEditingPrompt = false
     @State private var selectedPromptForEdit: CustomPrompt?
@@ -50,40 +50,40 @@ struct ConfigurationView: View {
         }
         return model.provider == .parakeet || model.provider == .gemini
     }
-    
-    // Whisper state for model selection
+
+    /// Whisper state for model selection
     @EnvironmentObject private var whisperState: WhisperState
-    
-    // Computed property to check if current config is the default
+
+    /// Computed property to check if current config is the default
     private var isCurrentConfigDefault: Bool {
-        if case .edit(let config) = mode {
+        if case let .edit(config) = mode {
             return config.isDefault
         }
         return false
     }
-    
+
     private var filteredApps: [(url: URL, name: String, bundleId: String, icon: NSImage)] {
         if searchText.isEmpty {
             return installedApps
         }
         return installedApps.filter { app in
             app.name.localizedCaseInsensitiveContains(searchText) ||
-            app.bundleId.localizedCaseInsensitiveContains(searchText)
+                app.bundleId.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
-    // Simplified computed property for effective model name
+
+    /// Simplified computed property for effective model name
     private var effectiveModelName: String? {
         if let model = selectedTranscriptionModelName {
             return model
         }
         return whisperState.currentTranscriptionModel?.name
     }
-    
+
     init(mode: ConfigurationMode, powerModeManager: PowerModeManager) {
         self.mode = mode
         self.powerModeManager = powerModeManager
-        
+
         // Always fetch the most current configuration data
         switch mode {
         case .add:
@@ -99,7 +99,7 @@ struct ConfigurationView: View {
             // Default to current global AI provider/model for new configurations - use UserDefaults only
             _selectedAIProvider = State(initialValue: UserDefaults.standard.string(forKey: "selectedAIProvider"))
             _selectedAIModel = State(initialValue: nil) // Initialize to nil and set it after view appears
-        case .edit(let config):
+        case let .edit(config):
             // Get the latest version of this config from PowerModeManager
             let latestConfig = powerModeManager.getConfiguration(with: config.id) ?? config
             _isAIEnhancementEnabled = State(initialValue: latestConfig.isAIEnhancementEnabled)
@@ -117,7 +117,7 @@ struct ConfigurationView: View {
             _selectedAIModel = State(initialValue: latestConfig.selectedAIModel)
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header with Title and Cancel button
@@ -125,10 +125,10 @@ struct ConfigurationView: View {
                 Text(mode.title)
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                
+
                 Spacer()
-                
-                if case .edit(let config) = mode {
+
+                if case let .edit(config) = mode {
                     Button("Delete") {
                         let alert = NSAlert()
                         alert.messageText = "Delete Power Mode?"
@@ -136,10 +136,10 @@ struct ConfigurationView: View {
                         alert.alertStyle = .warning
                         alert.addButton(withTitle: "Delete")
                         alert.addButton(withTitle: "Cancel")
-                        
+
                         // Style the Delete button as destructive
                         alert.buttons[0].hasDestructiveAction = true
-                        
+
                         let response = alert.runModal()
                         if response == .alertFirstButtonReturn {
                             powerModeManager.removeConfiguration(with: config.id)
@@ -149,7 +149,7 @@ struct ConfigurationView: View {
                     .foregroundColor(.red)
                     .padding(.trailing, 8)
                 }
-                
+
                 Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
                 }
@@ -158,9 +158,9 @@ struct ConfigurationView: View {
             .padding(.horizontal)
             .padding(.top)
             .padding(.bottom, 10)
-            
+
             Divider()
-            
+
             ScrollView {
                 VStack(spacing: 20) {
                     // Main Input Section
@@ -173,7 +173,7 @@ struct ConfigurationView: View {
                                     Circle()
                                         .fill(Color.accentColor.opacity(0.15))
                                         .frame(width: 48, height: 48)
-                                    
+
                                     Text(selectedEmoji)
                                         .font(.system(size: 24))
                                 }
@@ -185,7 +185,7 @@ struct ConfigurationView: View {
                                     isPresented: $isShowingEmojiPicker
                                 )
                             }
-                            
+
                             TextField("Name your power mode", text: $configName)
                                 .font(.system(size: 18, weight: .bold))
                                 .textFieldStyle(.plain)
@@ -193,17 +193,17 @@ struct ConfigurationView: View {
                                 .tint(.accentColor)
                                 .focused($isNameFieldFocused)
                         }
-                        
+
                         // Default Power Mode Toggle
                         HStack {
                             Toggle("Set as default power mode", isOn: $isDefault)
                                 .font(.system(size: 14))
-                            
+
                             InfoTip(
                                 title: "Default Power Mode",
                                 message: "Default power mode is used when no specific app or website matches are found"
                             )
-                            
+
                             Spacer()
                         }
                     }
@@ -217,18 +217,18 @@ struct ConfigurationView: View {
                             isNameFieldFocused = true
                         }
                     }
-                    
+
                     VStack(spacing: 16) {
                         SectionHeader(title: "When to Trigger")
-                        
+
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("Applications")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 Spacer()
-                                
+
                                 Button(action: {
                                     loadInstalledApps()
                                     isShowingAppPicker = true
@@ -238,7 +238,7 @@ struct ConfigurationView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            
+
                             if selectedAppConfigs.isEmpty {
                                 HStack {
                                     Spacer()
@@ -269,7 +269,7 @@ struct ConfigurationView: View {
                                                         .frame(width: 50, height: 50)
                                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                                 }
-                                                
+
                                                 // Remove button
                                                 Button(action: {
                                                     selectedAppConfigs.removeAll(where: { $0.id == appConfig.id })
@@ -289,22 +289,22 @@ struct ConfigurationView: View {
                                 }
                             }
                         }
-                        
+
                         Divider()
-                        
+
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Websites")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                                
+
                             // Add URL Field
                             HStack {
                                 TextField("Enter website URL (e.g., google.com)", text: $newWebsiteURL)
-                                .textFieldStyle(.roundedBorder)
+                                    .textFieldStyle(.roundedBorder)
                                     .onSubmit {
                                         addWebsite()
                                     }
-                                
+
                                 Button(action: addWebsite) {
                                     Image(systemName: "plus.circle.fill")
                                         .foregroundColor(.accentColor)
@@ -313,7 +313,7 @@ struct ConfigurationView: View {
                                 .buttonStyle(.plain)
                                 .disabled(newWebsiteURL.isEmpty)
                             }
-                            
+
                             if websiteConfigs.isEmpty {
                                 HStack {
                                     Spacer()
@@ -332,13 +332,13 @@ struct ConfigurationView: View {
                                             Image(systemName: "globe")
                                                 .font(.system(size: 11))
                                                 .foregroundColor(.accentColor)
-                                            
+
                                             Text(urlConfig.url)
                                                 .font(.system(size: 11))
                                                 .lineLimit(1)
-                                            
+
                                             Spacer(minLength: 0)
-                                            
+
                                             Button(action: {
                                                 websiteConfigs.removeAll(where: { $0.id == urlConfig.id })
                                             }) {
@@ -361,10 +361,10 @@ struct ConfigurationView: View {
                     .padding()
                     .background(CardBackground(isSelected: false))
                     .padding(.horizontal)
-                    
+
                     VStack(spacing: 16) {
                         SectionHeader(title: "Transcription")
-                        
+
                         if whisperState.usableModels.isEmpty {
                             Text("No transcription models available. Please connect to a cloud service or download a local model in the AI Models tab.")
                                 .font(.subheadline)
@@ -379,12 +379,12 @@ struct ConfigurationView: View {
                                 },
                                 set: { selectedTranscriptionModelName = $0 }
                             )
-                            
+
                             HStack {
                                 Text("Model")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 Picker("", selection: modelBinding) {
                                     ForEach(whisperState.usableModels, id: \.name) { model in
                                         Text(model.displayName).tag(model.name as String?)
@@ -395,37 +395,37 @@ struct ConfigurationView: View {
                                 Spacer()
                             }
                         }
-                        
+
                         if languageSelectionDisabled() {
                             HStack {
                                 Text("Language")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 Text("Autodetected")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 Spacer()
                             }
                         } else if let selectedModel = effectiveModelName,
                                   let modelInfo = whisperState.allAvailableModels.first(where: { $0.name == selectedModel }),
-                                  modelInfo.isMultilingualModel {
-                            
+                                  modelInfo.isMultilingualModel
+                        {
                             let languageBinding = Binding<String?>(
                                 get: {
                                     selectedLanguage ?? UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "auto"
                                 },
                                 set: { selectedLanguage = $0 }
                             )
-                            
+
                             HStack {
                                 Text("Language")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 Picker("", selection: languageBinding) {
-                                    ForEach(modelInfo.supportedLanguages.sorted(by: { 
+                                    ForEach(modelInfo.supportedLanguages.sorted(by: {
                                         if $0.key == "auto" { return true }
                                         if $1.key == "auto" { return false }
                                         return $0.value < $1.value
@@ -439,8 +439,8 @@ struct ConfigurationView: View {
                             }
                         } else if let selectedModel = effectiveModelName,
                                   let modelInfo = whisperState.allAvailableModels.first(where: { $0.name == selectedModel }),
-                                  !modelInfo.isMultilingualModel {
-                            
+                                  !modelInfo.isMultilingualModel
+                        {
                             EmptyView()
                                 .onAppear {
                                     if selectedLanguage == nil {
@@ -452,13 +452,13 @@ struct ConfigurationView: View {
                     .padding()
                     .background(CardBackground(isSelected: false))
                     .padding(.horizontal)
-                    
+
                     VStack(spacing: 16) {
                         SectionHeader(title: "AI Enhancement")
 
                         Toggle("Enable AI Enhancement", isOn: $isAIEnhancementEnabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .onChange(of: isAIEnhancementEnabled) { oldValue, newValue in
+                            .onChange(of: isAIEnhancementEnabled) { _, newValue in
                                 if newValue {
                                     if selectedAIProvider == nil {
                                         selectedAIProvider = aiService.selectedProvider.rawValue
@@ -470,32 +470,29 @@ struct ConfigurationView: View {
                             }
 
                         Divider()
-                            
-                            let providerBinding = Binding<AIProvider>(
-                                get: {
-                                    if let providerName = selectedAIProvider,
-                                       let provider = AIProvider(rawValue: providerName) {
-                                        return provider
-                                    }
-                                    return aiService.selectedProvider
-                                },
-                                set: { newValue in
-                                    selectedAIProvider = newValue.rawValue
-                                    aiService.selectedProvider = newValue
-                                    selectedAIModel = nil
+
+                        let providerBinding = Binding<AIProvider>(
+                            get: {
+                                if let providerName = selectedAIProvider,
+                                   let provider = AIProvider(rawValue: providerName)
+                                {
+                                    return provider
                                 }
-                            )
-                            
-                            
-                        
-                        
+                                return aiService.selectedProvider
+                            },
+                            set: { newValue in
+                                selectedAIProvider = newValue.rawValue
+                                aiService.selectedProvider = newValue
+                                selectedAIModel = nil
+                            }
+                        )
+
                         if isAIEnhancementEnabled {
-                            
                             HStack {
                                 Text("AI Provider")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                
+
                                 if aiService.connectedProviders.isEmpty {
                                     Text("No providers connected")
                                         .foregroundColor(.secondary)
@@ -508,7 +505,7 @@ struct ConfigurationView: View {
                                         }
                                     }
                                     .labelsHidden()
-                                    .onChange(of: selectedAIProvider) { oldValue, newValue in
+                                    .onChange(of: selectedAIProvider) { _, newValue in
                                         if let provider = newValue.flatMap({ AIProvider(rawValue: $0) }) {
                                             selectedAIModel = provider.defaultModel
                                         }
@@ -516,16 +513,16 @@ struct ConfigurationView: View {
                                     Spacer()
                                 }
                             }
-                            
+
                             let providerName = selectedAIProvider ?? aiService.selectedProvider.rawValue
                             if let provider = AIProvider(rawValue: providerName),
-                               provider != .custom {
-                                
+                               provider != .custom
+                            {
                                 HStack {
                                     Text("AI Model")
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
-                                    
+
                                     if aiService.availableModels.isEmpty {
                                         Text(provider == .openRouter ? "No models loaded" : "No models available")
                                             .foregroundColor(.secondary)
@@ -533,7 +530,7 @@ struct ConfigurationView: View {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     } else {
                                         let modelBinding = Binding<String>(
-                                            get: { 
+                                            get: {
                                                 if let model = selectedAIModel, !model.isEmpty {
                                                     return model
                                                 }
@@ -544,16 +541,16 @@ struct ConfigurationView: View {
                                                 aiService.selectModel(newModelValue)
                                             }
                                         )
-                                        
+
                                         let models = provider == .openRouter ? aiService.availableModels : (provider == .ollama ? aiService.availableModels : provider.availableModels)
-                                        
+
                                         Picker("", selection: modelBinding) {
                                             ForEach(models, id: \.self) { model in
                                                 Text(model).tag(model)
                                             }
                                         }
                                         .labelsHidden()
-                                        
+
                                         if provider == .openRouter {
                                             Button(action: {
                                                 Task {
@@ -565,18 +562,17 @@ struct ConfigurationView: View {
                                             .buttonStyle(.borderless)
                                             .help("Refresh models")
                                         }
-                                        
+
                                         Spacer()
                                     }
                                 }
                             }
-                        
-                            
+
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Enhancement Prompt")
                                     .font(.headline)
                                     .foregroundColor(.primary)
-                                
+
                                 PromptSelectionGrid(
                                     prompts: enhancementService.allPrompts,
                                     selectedPromptId: selectedPromptId,
@@ -596,36 +592,33 @@ struct ConfigurationView: View {
                             }
 
                             Divider()
-                            
-                           
+
                             Toggle("Context Awareness", isOn: $useScreenCapture)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                            
                         }
                     }
                     .padding()
                     .background(CardBackground(isSelected: false))
                     .padding(.horizontal)
-                    
+
                     VStack(spacing: 16) {
                         SectionHeader(title: "Advanced")
 
                         HStack {
                             Toggle("Auto Send", isOn: $isAutoSendEnabled)
-                            
+
                             InfoTip(
                                 title: "Auto Send",
                                 message: "Automatically presses the Return/Enter key after pasting text. This is useful for chat applications or forms where its not necessary to to make changes to the transcribed text"
                             )
-                            
+
                             Spacer()
                         }
                     }
                     .padding()
                     .background(CardBackground(isSelected: false))
                     .padding(.horizontal)
-                    
+
                     HStack {
                         Spacer()
                         Button(action: saveConfiguration) {
@@ -674,27 +667,27 @@ struct ConfigurationView: View {
                     selectedAIModel = aiService.currentModel
                 }
             }
-            
+
             // Select first prompt if AI enhancement is enabled and no prompt is selected
             if isAIEnhancementEnabled && selectedPromptId == nil {
                 selectedPromptId = enhancementService.allPrompts.first?.id
             }
         }
     }
-    
+
     private var canSave: Bool {
         return !configName.isEmpty
     }
-    
+
     private func addWebsite() {
         guard !newWebsiteURL.isEmpty else { return }
-        
+
         let cleanedURL = powerModeManager.cleanURL(newWebsiteURL)
         let urlConfig = URLConfig(url: cleanedURL)
         websiteConfigs.append(urlConfig)
         newWebsiteURL = ""
     }
-    
+
     private func toggleAppSelection(_ app: (url: URL, name: String, bundleId: String, icon: NSImage)) {
         if let index = selectedAppConfigs.firstIndex(where: { $0.bundleIdentifier == app.bundleId }) {
             selectedAppConfigs.remove(at: index)
@@ -703,26 +696,26 @@ struct ConfigurationView: View {
             selectedAppConfigs.append(appConfig)
         }
     }
-    
+
     private func getConfigForForm() -> PowerModeConfig {
         switch mode {
         case .add:
-                return PowerModeConfig(
+            return PowerModeConfig(
                 name: configName,
                 emoji: selectedEmoji,
                 appConfigs: selectedAppConfigs.isEmpty ? nil : selectedAppConfigs,
                 urlConfigs: websiteConfigs.isEmpty ? nil : websiteConfigs,
-                    isAIEnhancementEnabled: isAIEnhancementEnabled,
-                    selectedPrompt: selectedPromptId?.uuidString,
-                    selectedTranscriptionModelName: selectedTranscriptionModelName,
-                    selectedLanguage: selectedLanguage,
-                    useScreenCapture: useScreenCapture,
-                    selectedAIProvider: selectedAIProvider,
-                    selectedAIModel: selectedAIModel,
-                    isAutoSendEnabled: isAutoSendEnabled,
-                    isDefault: isDefault
-                )
-        case .edit(let config):
+                isAIEnhancementEnabled: isAIEnhancementEnabled,
+                selectedPrompt: selectedPromptId?.uuidString,
+                selectedTranscriptionModelName: selectedTranscriptionModelName,
+                selectedLanguage: selectedLanguage,
+                useScreenCapture: useScreenCapture,
+                selectedAIProvider: selectedAIProvider,
+                selectedAIModel: selectedAIModel,
+                isAutoSendEnabled: isAutoSendEnabled,
+                isDefault: isDefault
+            )
+        case let .edit(config):
             var updatedConfig = config
             updatedConfig.name = configName
             updatedConfig.emoji = selectedEmoji
@@ -740,83 +733,83 @@ struct ConfigurationView: View {
             return updatedConfig
         }
     }
-    
+
     private func loadInstalledApps() {
         // Get both user-installed and system applications
         let userAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .userDomainMask)
         let localAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask)
         let systemAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .systemDomainMask)
         let allAppURLs = userAppURLs + localAppURLs + systemAppURLs
-        
+
         var allApps: [URL] = []
-        
+
         func scanDirectory(_ baseURL: URL, depth: Int = 0) {
             // Prevent infinite recursion in case of circular symlinks
             guard depth < 5 else { return }
-            
+
             guard let enumerator = FileManager.default.enumerator(
                 at: baseURL,
                 includingPropertiesForKeys: [.isApplicationKey, .isDirectoryKey, .isSymbolicLinkKey],
                 options: [.skipsHiddenFiles]
             ) else { return }
-            
+
             for item in enumerator {
                 guard let url = item as? URL else { continue }
-                
+
                 let resolvedURL = url.resolvingSymlinksInPath()
-                
+
                 // If it's an app, add it and skip descending into it
                 if resolvedURL.pathExtension == "app" {
                     allApps.append(resolvedURL)
                     enumerator.skipDescendants()
                     continue
                 }
-                
+
                 // Check if this is a symlinked directory we should traverse manually
                 var isDirectory: ObjCBool = false
-                if url != resolvedURL && 
-                   FileManager.default.fileExists(atPath: resolvedURL.path, isDirectory: &isDirectory) && 
-                   isDirectory.boolValue {
+                if url != resolvedURL,
+                   FileManager.default.fileExists(atPath: resolvedURL.path, isDirectory: &isDirectory),
+                   isDirectory.boolValue
+                {
                     // This is a symlinked directory - traverse it manually
                     enumerator.skipDescendants()
                     scanDirectory(resolvedURL, depth: depth + 1)
                 }
             }
         }
-        
+
         // Scan all app directories
         for baseURL in allAppURLs {
             scanDirectory(baseURL)
         }
-        
+
         installedApps = allApps.compactMap { url in
             guard let bundle = Bundle(url: url),
                   let bundleId = bundle.bundleIdentifier,
                   let name = (bundle.infoDictionary?["CFBundleName"] as? String) ??
-                            (bundle.infoDictionary?["CFBundleDisplayName"] as? String) else {
+                  (bundle.infoDictionary?["CFBundleDisplayName"] as? String)
+            else {
                 return nil
             }
-            
+
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             return (url: url, name: name, bundleId: bundleId, icon: icon)
         }
         .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
-    
+
     private func saveConfiguration() {
-        
-        
         let config = getConfigForForm()
-        
+
         // Only validate when the user explicitly tries to save
         let validator = PowerModeValidator(powerModeManager: powerModeManager)
         validationErrors = validator.validateForSave(config: config, mode: mode)
-        
+
         if !validationErrors.isEmpty {
             showValidationAlert = true
             return
         }
-        
+
         // If validation passes, save the configuration
         switch mode {
         case .add:
@@ -824,12 +817,12 @@ struct ConfigurationView: View {
         case .edit:
             powerModeManager.updateConfiguration(config)
         }
-        
+
         // Handle default flag separately to ensure only one config is default
         if isDefault {
             powerModeManager.setAsDefault(configId: config.id)
         }
-        
+
         presentationMode.wrappedValue.dismiss()
     }
 }

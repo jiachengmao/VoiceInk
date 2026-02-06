@@ -76,7 +76,7 @@ class GeminiTranscriptionService {
     }
 
     private func getAPIConfig(for model: any TranscriptionModel) throws -> APIConfig {
-        guard let apiKey = UserDefaults.standard.string(forKey: "GeminiAPIKey"), !apiKey.isEmpty else {
+        guard let apiKey = APIKeyManager.shared.getAPIKey(forProvider: "Gemini"), !apiKey.isEmpty else {
             throw CloudTranscriptionError.missingAPIKey
         }
 

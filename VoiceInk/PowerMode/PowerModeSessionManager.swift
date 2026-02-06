@@ -1,5 +1,5 @@
-import AppKit
 import Foundation
+import AppKit
 
 struct ApplicationState: Codable {
     var isEnhancementEnabled: Bool
@@ -41,28 +41,36 @@ class PowerModeSessionManager {
             return
         }
 
-        let originalState = ApplicationState(
-            isEnhancementEnabled: enhancementService.isEnhancementEnabled,
-            useScreenCaptureContext: enhancementService.useScreenCaptureContext,
-            selectedPromptId: enhancementService.selectedPromptId?.uuidString,
-            selectedAIProvider: enhancementService.getAIService()?.selectedProvider.rawValue,
-            selectedAIModel: enhancementService.getAIService()?.currentModel,
-            selectedLanguage: UserDefaults.standard.string(forKey: "SelectedLanguage"),
-            transcriptionModelName: whisperState.currentTranscriptionModel?.name
-        )
+        // Only capture baseline if NO session exists
+        if loadSession() == nil {
+            let originalState = ApplicationState(
+                isEnhancementEnabled: enhancementService.isEnhancementEnabled,
+                useScreenCaptureContext: enhancementService.useScreenCaptureContext,
+                selectedPromptId: enhancementService.selectedPromptId?.uuidString,
+                selectedAIProvider: enhancementService.getAIService()?.selectedProvider.rawValue,
+                selectedAIModel: enhancementService.getAIService()?.currentModel,
+                selectedLanguage: UserDefaults.standard.string(forKey: "SelectedLanguage"),
+                transcriptionModelName: whisperState.currentTranscriptionModel?.name
+            )
 
-        let newSession = PowerModeSession(
-            id: UUID(),
-            startTime: Date(),
-            originalState: originalState
-        )
-        saveSession(newSession)
+            let newSession = PowerModeSession(
+                id: UUID(),
+                startTime: Date(),
+                originalState: originalState
+            )
+            saveSession(newSession)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(updateSessionSnapshot), name: .AppSettingsDidChange, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(updateSessionSnapshot), name: .AppSettingsDidChange, object: nil)
+        }
 
+        // Always apply the new configuration
         isApplyingPowerModeConfig = true
         await applyConfiguration(config)
         isApplyingPowerModeConfig = false
+    }
+
+    var hasActiveSession: Bool {
+        return loadSession() != nil
     }
 
     func endSession() async {
@@ -71,15 +79,15 @@ class PowerModeSessionManager {
         isApplyingPowerModeConfig = true
         await restoreState(session.originalState)
         isApplyingPowerModeConfig = false
-
+        
         NotificationCenter.default.removeObserver(self, name: .AppSettingsDidChange, object: nil)
 
         clearSession()
     }
-
+    
     @objc func updateSessionSnapshot() {
         guard !isApplyingPowerModeConfig else { return }
-
+        
         guard var session = loadSession(), let whisperState = whisperState, let enhancementService = enhancementService else { return }
 
         let updatedState = ApplicationState(
@@ -91,7 +99,7 @@ class PowerModeSessionManager {
             selectedLanguage: UserDefaults.standard.string(forKey: "SelectedLanguage"),
             transcriptionModelName: whisperState.currentTranscriptionModel?.name
         )
-
+        
         session.originalState = updatedState
         saveSession(session)
     }
@@ -127,11 +135,10 @@ class PowerModeSessionManager {
         if let whisperState = whisperState,
            let modelName = config.selectedTranscriptionModelName,
            let selectedModel = await whisperState.allAvailableModels.first(where: { $0.name == modelName }),
-           whisperState.currentTranscriptionModel?.name != modelName
-        {
+           whisperState.currentTranscriptionModel?.name != modelName {
             await handleModelChange(to: selectedModel)
         }
-
+        
         await MainActor.run {
             NotificationCenter.default.post(name: .powerModeConfigurationApplied, object: nil)
         }
@@ -163,12 +170,11 @@ class PowerModeSessionManager {
         if let whisperState = whisperState,
            let modelName = state.transcriptionModelName,
            let selectedModel = await whisperState.allAvailableModels.first(where: { $0.name == modelName }),
-           whisperState.currentTranscriptionModel?.name != modelName
-        {
+           whisperState.currentTranscriptionModel?.name != modelName {
             await handleModelChange(to: selectedModel)
         }
     }
-
+    
     private func handleModelChange(to newModel: any TranscriptionModel) async {
         guard let whisperState = whisperState else { return }
 
@@ -184,7 +190,6 @@ class PowerModeSessionManager {
                     print("Power Mode: Failed to load local model '\(localModel.name)': \(error)")
                 }
             }
-
         case .parakeet:
             await whisperState.cleanupModelResources()
 
@@ -192,7 +197,7 @@ class PowerModeSessionManager {
             await whisperState.cleanupModelResources()
         }
     }
-
+    
     private func recoverSession() {
         guard let session = loadSession() else { return }
         print("Recovering abandoned Power Mode session.")
@@ -209,7 +214,7 @@ class PowerModeSessionManager {
             print("Error saving Power Mode session: \(error)")
         }
     }
-
+    
     private func loadSession() -> PowerModeSession? {
         guard let data = UserDefaults.standard.data(forKey: sessionKey) else { return nil }
         do {

@@ -1,16 +1,30 @@
-import AppKit
 import SwiftUI
+import AppKit
 
-enum ClipboardManager {
+struct ClipboardManager {
     enum ClipboardError: Error {
         case copyFailed
         case accessDenied
     }
 
-    static func copyToClipboard(_ text: String) -> Bool {
+    static func setClipboard(_ text: String, transient: Bool = false) -> Bool {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        return pasteboard.setString(text, forType: .string)
+        pasteboard.setString(text, forType: .string)
+
+        if let bundleIdentifier = Bundle.main.bundleIdentifier {
+            pasteboard.setString(bundleIdentifier, forType: NSPasteboard.PasteboardType("org.nspasteboard.source"))
+        }
+
+        if transient {
+            pasteboard.setData(Data(), forType: NSPasteboard.PasteboardType("org.nspasteboard.TransientType"))
+        }
+
+        return true
+    }
+
+    static func copyToClipboard(_ text: String) -> Bool {
+        return setClipboard(text, transient: false)
     }
 
     static func getClipboardContent() -> String? {
@@ -20,7 +34,7 @@ enum ClipboardManager {
 
 struct ClipboardMessageModifier: ViewModifier {
     @Binding var message: String
-
+    
     func body(content: Content) -> some View {
         content
             .overlay(
@@ -45,6 +59,6 @@ struct ClipboardMessageModifier: ViewModifier {
 
 extension View {
     func clipboardMessage(_ message: Binding<String>) -> some View {
-        modifier(ClipboardMessageModifier(message: message))
+        self.modifier(ClipboardMessageModifier(message: message))
     }
 }

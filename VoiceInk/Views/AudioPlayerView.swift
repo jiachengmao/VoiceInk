@@ -1,8 +1,29 @@
-import AVFoundation
 import SwiftUI
+import AVFoundation
+
+extension TimeInterval {
+    func formatTiming() -> String {
+        if self < 1 {
+            return String(format: "%.0fms", self * 1000)
+        }
+        if self < 60 {
+            return String(format: "%.1fs", self)
+        }
+        let minutes = Int(self) / 60
+        let seconds = self.truncatingRemainder(dividingBy: 60)
+        return String(format: "%dm %.0fs", minutes, seconds)
+    }
+}
 
 class WaveformGenerator {
+    private static let cache = NSCache<NSString, NSArray>()
+
     static func generateWaveformSamples(from url: URL, sampleCount: Int = 200) async -> [Float] {
+        let cacheKey = url.absoluteString as NSString
+
+        if let cachedSamples = cache.object(forKey: cacheKey) as? [Float] {
+            return cachedSamples
+        }
         guard let audioFile = try? AVAudioFile(forReading: url) else { return [] }
         let format = audioFile.processingFormat
         let frameCount = UInt32(audioFile.length)
@@ -16,7 +37,7 @@ class WaveformGenerator {
             var sampleIndex = 0
             var framePosition: AVAudioFramePosition = 0
 
-            while sampleIndex < sampleCount, framePosition < AVAudioFramePosition(frameCount) {
+            while sampleIndex < sampleCount && framePosition < AVAudioFramePosition(frameCount) {
                 audioFile.framePosition = framePosition
                 try audioFile.read(into: buffer)
 
@@ -28,10 +49,15 @@ class WaveformGenerator {
                 framePosition += AVAudioFramePosition(stride)
             }
 
+            let normalizedSamples: [Float]
             if let maxSample = maxValues.max(), maxSample > 0 {
-                return maxValues.map { $0 / maxSample }
+                normalizedSamples = maxValues.map { $0 / maxSample }
+            } else {
+                normalizedSamples = maxValues
             }
-            return maxValues
+
+            cache.setObject(normalizedSamples as NSArray, forKey: cacheKey)
+            return normalizedSamples
         } catch {
             print("Error reading audio file: \(error)")
             return []
@@ -47,14 +73,14 @@ class AudioPlayerManager: ObservableObject {
     @Published var duration: TimeInterval = 0
     @Published var waveformSamples: [Float] = []
     @Published var isLoadingWaveform = false
-
+    
     func loadAudio(from url: URL) {
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.prepareToPlay()
             duration = audioPlayer?.duration ?? 0
             isLoadingWaveform = true
-
+            
             Task {
                 let samples = await WaveformGenerator.generateWaveformSamples(from: url)
                 await MainActor.run {
@@ -66,24 +92,24 @@ class AudioPlayerManager: ObservableObject {
             print("Error loading audio: \(error.localizedDescription)")
         }
     }
-
+    
     func play() {
         audioPlayer?.play()
         isPlaying = true
         startTimer()
     }
-
+    
     func pause() {
         audioPlayer?.pause()
         isPlaying = false
         stopTimer()
     }
-
+    
     func seek(to time: TimeInterval) {
         audioPlayer?.currentTime = time
         currentTime = time
     }
-
+    
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -100,8 +126,14 @@ class AudioPlayerManager: ObservableObject {
         timer = nil
     }
 
-    deinit {
+    func cleanup() {
         stopTimer()
+        audioPlayer?.stop()
+        audioPlayer = nil
+    }
+
+    deinit {
+        cleanup()
     }
 }
 
@@ -113,22 +145,22 @@ struct WaveformView: View {
     var onSeek: (Double) -> Void
     @State private var isHovering = false
     @State private var hoverLocation: CGFloat = 0
-
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 if isLoading {
-                    VStack {
+                    HStack {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Generating waveform...")
-                            .font(.system(size: 12))
+                        Text("Loading...")
+                            .font(.system(size: 10))
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    HStack(spacing: 1) {
-                        ForEach(0 ..< samples.count, id: \.self) { index in
+                    HStack(spacing: 0.5) {
+                        ForEach(0..<samples.count, id: \.self) { index in
                             WaveformBar(
                                 sample: samples[index],
                                 isPlayed: CGFloat(index) / CGFloat(samples.count) <= CGFloat(currentTime / duration),
@@ -139,19 +171,20 @@ struct WaveformView: View {
                             )
                         }
                     }
+                    .opacity(0.6)
                     .frame(maxHeight: .infinity)
                     .padding(.horizontal, 2)
 
                     if isHovering {
                         Text(formatTime(duration * Double(hoverLocation / geometry.size.width)))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .monospacedDigit()
                             .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
                             .background(Capsule().fill(Color.accentColor))
-                            .offset(x: max(0, min(hoverLocation - 30, geometry.size.width - 60)))
-                            .offset(y: -30)
+                            .offset(x: max(0, min(hoverLocation - 25, geometry.size.width - 50)))
+                            .offset(y: -26)
 
                         Rectangle()
                             .fill(Color.accentColor)
@@ -180,15 +213,15 @@ struct WaveformView: View {
             }
             .onContinuousHover { phase in
                 if !isLoading {
-                    if case let .active(location) = phase {
+                    if case .active(let location) = phase {
                         hoverLocation = location.x
                     }
                 }
             }
         }
-        .frame(height: 56)
+        .frame(height: 32)
     }
-
+    
     private func formatTime(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
@@ -203,30 +236,30 @@ struct WaveformBar: View {
     let geometryWidth: CGFloat
     let isHovering: Bool
     let hoverProgress: CGFloat
-
+    
     private var isNearHover: Bool {
         let barPosition = geometryWidth / CGFloat(totalBars)
         let hoverPosition = hoverProgress * geometryWidth
         return abs(barPosition - hoverPosition) < 20
     }
-
+    
     var body: some View {
         Capsule()
             .fill(
                 LinearGradient(
                     colors: [
-                        isPlayed ? Color.accentColor : Color.accentColor.opacity(0.3),
-                        isPlayed ? Color.accentColor.opacity(0.8) : Color.accentColor.opacity(0.2),
+                        isPlayed ? Color.primary : Color.primary.opacity(0.3),
+                        isPlayed ? Color.primary.opacity(0.8) : Color.primary.opacity(0.2)
                     ],
                     startPoint: .bottom,
                     endPoint: .top
                 )
             )
             .frame(
-                width: max((geometryWidth / CGFloat(totalBars)) - 1, 1),
-                height: max(CGFloat(sample) * 40, 3)
+                width: max((geometryWidth / CGFloat(totalBars)) - 0.5, 1),
+                height: max(CGFloat(sample) * 24, 2)
             )
-            .scaleEffect(y: isHovering && isNearHover ? 1.2 : 1.0)
+            .scaleEffect(y: isHovering && isNearHover ? 1.15 : 1.0)
             .animation(.interpolatingSpring(stiffness: 300, damping: 15), value: isHovering && isNearHover)
     }
 }
@@ -239,50 +272,43 @@ struct AudioPlayerView: View {
     @State private var showRetranscribeSuccess = false
     @State private var showRetranscribeError = false
     @State private var errorMessage = ""
+    @State private var showPromptPopover = false
     @EnvironmentObject private var whisperState: WhisperState
+    @EnvironmentObject private var enhancementService: AIEnhancementService
     @Environment(\.modelContext) private var modelContext
-
+    
     private var transcriptionService: AudioTranscriptionService {
         AudioTranscriptionService(modelContext: modelContext, whisperState: whisperState)
     }
-
+    
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "waveform")
-                        .foregroundStyle(Color.accentColor)
-                    Text("Recording")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(.secondary)
+        VStack(spacing: 8) {
+            WaveformView(
+                samples: playerManager.waveformSamples,
+                currentTime: playerManager.currentTime,
+                duration: playerManager.duration,
+                isLoading: playerManager.isLoadingWaveform,
+                onSeek: { playerManager.seek(to: $0) }
+            )
+            .padding(.horizontal, 10)
+
+            HStack(spacing: 8) {
+                Text(formatTime(playerManager.currentTime))
+                    .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundColor(.secondary)
 
                 Spacer()
 
-                Text(formatTime(playerManager.duration))
-                    .font(.system(size: 14, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundColor(.secondary)
-            }
-
-            VStack(spacing: 16) {
-                WaveformView(
-                    samples: playerManager.waveformSamples,
-                    currentTime: playerManager.currentTime,
-                    duration: playerManager.duration,
-                    isLoading: playerManager.isLoadingWaveform,
-                    onSeek: { playerManager.seek(to: $0) }
-                )
-
-                HStack(spacing: 20) {
+                HStack(spacing: 8) {
                     Button(action: showInFinder) {
                         Circle()
-                            .fill(Color.orange.opacity(0.1))
-                            .frame(width: 44, height: 44)
+                            .fill(Color.primary.opacity(0.06))
+                            .frame(width: 32, height: 32)
                             .overlay(
                                 Image(systemName: "folder")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Color.orange)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.primary)
                             )
                     }
                     .buttonStyle(.plain)
@@ -296,12 +322,12 @@ struct AudioPlayerView: View {
                         }
                     }) {
                         Circle()
-                            .fill(Color.accentColor.opacity(0.1))
-                            .frame(width: 44, height: 44)
+                            .fill(Color.primary.opacity(0.06))
+                            .frame(width: 32, height: 32)
                             .overlay(
                                 Image(systemName: playerManager.isPlaying ? "pause.fill" : "play.fill")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Color.accentColor)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.primary)
                                     .contentTransition(.symbolEffect(.replace.downUp))
                             )
                     }
@@ -313,10 +339,30 @@ struct AudioPlayerView: View {
                         }
                     }
 
+                    Button(action: {
+                        showPromptPopover.toggle()
+                    }) {
+                        Circle()
+                            .fill(Color.primary.opacity(0.06))
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Image(systemName: enhancementService.activePrompt?.icon ?? "sparkles")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(enhancementService.isEnhancementEnabled ? 1.0 : 0.4)
+                    .help("Select enhancement prompt")
+                    .popover(isPresented: $showPromptPopover, arrowEdge: .bottom) {
+                        EnhancementPromptPopover()
+                            .environmentObject(enhancementService)
+                    }
+
                     Button(action: retranscribeAudio) {
                         Circle()
-                            .fill(Color.green.opacity(0.1))
-                            .frame(width: 44, height: 44)
+                            .fill(Color.primary.opacity(0.06))
+                            .frame(width: 32, height: 32)
                             .overlay(
                                 Group {
                                     if isRetranscribing {
@@ -324,12 +370,12 @@ struct AudioPlayerView: View {
                                             .controlSize(.small)
                                     } else if showRetranscribeSuccess {
                                         Image(systemName: "checkmark")
-                                            .font(.system(size: 18, weight: .semibold))
+                                            .font(.system(size: 14, weight: .semibold))
                                             .foregroundStyle(Color.green)
                                     } else {
                                         Image(systemName: "arrow.clockwise")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundStyle(Color.green)
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(.primary)
                                     }
                                 }
                             )
@@ -337,18 +383,24 @@ struct AudioPlayerView: View {
                     .buttonStyle(.plain)
                     .disabled(isRetranscribing)
                     .help("Retranscribe this audio")
-
-                    Text(formatTime(playerManager.currentTime))
-                        .font(.system(size: 14, weight: .medium))
-                        .monospacedDigit()
-                        .foregroundColor(.secondary)
                 }
+
+                Spacer()
+
+                Text(formatTime(playerManager.duration))
+                    .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal, 10)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
         .onAppear {
             playerManager.loadAudio(from: url)
+        }
+        .onDisappear {
+            playerManager.cleanup()
         }
         .overlay(
             VStack {
@@ -368,7 +420,7 @@ struct AudioPlayerView: View {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
-
+                
                 if showRetranscribeError {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.circle.fill")
@@ -385,7 +437,7 @@ struct AudioPlayerView: View {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
-
+                
                 Spacer()
             }
             .padding(.top, 16)
@@ -393,17 +445,17 @@ struct AudioPlayerView: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showRetranscribeError)
         )
     }
-
+    
     private func formatTime(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
-
+    
     private func showInFinder() {
         NSWorkspace.shared.selectFile(url.path, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
     }
-
+    
     private func retranscribeAudio() {
         guard let currentTranscriptionModel = whisperState.currentTranscriptionModel else {
             errorMessage = "No transcription model selected"
@@ -413,12 +465,12 @@ struct AudioPlayerView: View {
             }
             return
         }
-
+        
         isRetranscribing = true
-
+        
         Task {
             do {
-                _ = try await transcriptionService.retranscribeAudio(from: url, using: currentTranscriptionModel)
+                let _ = try await transcriptionService.retranscribeAudio(from: url, using: currentTranscriptionModel)
                 await MainActor.run {
                     isRetranscribing = false
                     showRetranscribeSuccess = true
@@ -438,4 +490,4 @@ struct AudioPlayerView: View {
             }
         }
     }
-}
+} 

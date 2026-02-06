@@ -1,9 +1,8 @@
 import AppKit
 import Combine
 import Foundation
-import MediaRemoteAdapter
 import SwiftUI
-
+import MediaRemoteAdapter
 class PlaybackController: ObservableObject {
     static let shared = PlaybackController()
     private var mediaController: MediaRemoteAdapter.MediaController
@@ -11,6 +10,7 @@ class PlaybackController: ObservableObject {
     private var isMediaPlaying = false
     private var lastKnownTrackInfo: TrackInfo?
     private var originalMediaAppBundleId: String?
+    private var resumeTask: Task<Void, Never>?
 
     @Published var isPauseMediaEnabled: Bool = UserDefaults.standard.bool(forKey: "isPauseMediaEnabled") {
         didSet {
@@ -23,13 +23,9 @@ class PlaybackController: ObservableObject {
             }
         }
     }
-
+    
     private init() {
         mediaController = MediaRemoteAdapter.MediaController()
-
-        if !UserDefaults.standard.contains(key: "isPauseMediaEnabled") {
-            UserDefaults.standard.set(false, forKey: "isPauseMediaEnabled")
-        }
 
         setupMediaControllerCallbacks()
 
@@ -37,20 +33,20 @@ class PlaybackController: ObservableObject {
             startMediaTracking()
         }
     }
-
+    
     private func setupMediaControllerCallbacks() {
         mediaController.onTrackInfoReceived = { [weak self] trackInfo in
             self?.isMediaPlaying = trackInfo.payload.isPlaying ?? false
             self?.lastKnownTrackInfo = trackInfo
         }
-
-        mediaController.onListenerTerminated = {}
+        
+        mediaController.onListenerTerminated = { }
     }
-
+    
     private func startMediaTracking() {
         mediaController.startListening()
     }
-
+    
     private func stopMediaTracking() {
         mediaController.stopListening()
         isMediaPlaying = false
@@ -58,23 +54,24 @@ class PlaybackController: ObservableObject {
         wasPlayingWhenRecordingStarted = false
         originalMediaAppBundleId = nil
     }
-
+    
     func pauseMedia() async {
+        resumeTask?.cancel()
+        resumeTask = nil
+
         wasPlayingWhenRecordingStarted = false
         originalMediaAppBundleId = nil
 
         guard isPauseMediaEnabled,
               isMediaPlaying,
               lastKnownTrackInfo?.payload.isPlaying == true,
-              let bundleId = lastKnownTrackInfo?.payload.bundleIdentifier
-        else {
+              let bundleId = lastKnownTrackInfo?.payload.bundleIdentifier else {
             return
         }
 
         wasPlayingWhenRecordingStarted = true
         originalMediaAppBundleId = bundleId
 
-        // Add a small delay to ensure state is set before sending command
         try? await Task.sleep(nanoseconds: 50_000_000)
 
         mediaController.pause()
@@ -83,6 +80,7 @@ class PlaybackController: ObservableObject {
     func resumeMedia() async {
         let shouldResume = wasPlayingWhenRecordingStarted
         let originalBundleId = originalMediaAppBundleId
+        let delay = MediaController.shared.audioResumptionDelay
 
         defer {
             wasPlayingWhenRecordingStarted = false
@@ -91,8 +89,7 @@ class PlaybackController: ObservableObject {
 
         guard isPauseMediaEnabled,
               shouldResume,
-              let bundleId = originalBundleId
-        else {
+              let bundleId = originalBundleId else {
             return
         }
 
@@ -103,25 +100,28 @@ class PlaybackController: ObservableObject {
         guard let currentTrackInfo = lastKnownTrackInfo,
               let currentBundleId = currentTrackInfo.payload.bundleIdentifier,
               currentBundleId == bundleId,
-              currentTrackInfo.payload.isPlaying == false
-        else {
+              currentTrackInfo.payload.isPlaying == false else {
             return
         }
 
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        let task = Task {
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
 
-        mediaController.play()
+            if Task.isCancelled {
+                return
+            }
+
+            mediaController.play()
+        }
+
+        resumeTask = task
+        await task.value
     }
-
+    
     private func isAppStillRunning(bundleId: String) -> Bool {
         let runningApps = NSWorkspace.shared.runningApplications
         return runningApps.contains { $0.bundleIdentifier == bundleId }
     }
 }
 
-extension UserDefaults {
-    var isPauseMediaEnabled: Bool {
-        get { bool(forKey: "isPauseMediaEnabled") }
-        set { set(newValue, forKey: "isPauseMediaEnabled") }
-    }
-}
+

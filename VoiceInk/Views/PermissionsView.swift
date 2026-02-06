@@ -1,26 +1,27 @@
+import SwiftUI
 import AVFoundation
 import Cocoa
 import KeyboardShortcuts
-import SwiftUI
 
 class PermissionManager: ObservableObject {
     @Published var audioPermissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
     @Published var isAccessibilityEnabled = false
     @Published var isScreenRecordingEnabled = false
     @Published var isKeyboardShortcutSet = false
-
+    
     init() {
         // Start observing system events that might indicate permission changes
         setupNotificationObservers()
-
+        
         // Initial permission checks
         checkAllPermissions()
     }
-
+    
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-
+    
     private func setupNotificationObservers() {
         // Only observe when app becomes active, as this is a likely time for permissions to have changed
         NotificationCenter.default.addObserver(
@@ -30,18 +31,18 @@ class PermissionManager: ObservableObject {
             object: nil
         )
     }
-
+    
     @objc private func applicationDidBecomeActive() {
         checkAllPermissions()
     }
-
+    
     func checkAllPermissions() {
         checkAccessibilityPermissions()
         checkScreenRecordingPermission()
         checkAudioPermissionStatus()
         checkKeyboardShortcut()
     }
-
+    
     func checkAccessibilityPermissions() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false]
         let accessibilityEnabled = AXIsProcessTrustedWithOptions(options)
@@ -49,23 +50,23 @@ class PermissionManager: ObservableObject {
             self.isAccessibilityEnabled = accessibilityEnabled
         }
     }
-
+    
     func checkScreenRecordingPermission() {
         DispatchQueue.main.async {
             self.isScreenRecordingEnabled = CGPreflightScreenCaptureAccess()
         }
     }
-
+    
     func requestScreenRecordingPermission() {
         CGRequestScreenCaptureAccess()
     }
-
+    
     func checkAudioPermissionStatus() {
         DispatchQueue.main.async {
             self.audioPermissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
         }
     }
-
+    
     func requestAudioPermission() {
         AVCaptureDevice.requestAccess(for: .audio) { granted in
             DispatchQueue.main.async {
@@ -73,7 +74,7 @@ class PermissionManager: ObservableObject {
             }
         }
     }
-
+    
     func checkKeyboardShortcut() {
         DispatchQueue.main.async {
             self.isKeyboardShortcutSet = KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder) != nil
@@ -89,7 +90,6 @@ struct PermissionCard: View {
     let buttonTitle: String
     let buttonAction: () -> Void
     let checkPermission: () -> Void
-    var infoTipTitle: String?
     var infoTipMessage: String?
     var infoTipLink: String?
     @State private var isRefreshing = false
@@ -113,21 +113,21 @@ struct PermissionCard: View {
                     HStack {
                         Text(title)
                             .font(.headline)
-                        if let infoTipTitle = infoTipTitle, let infoTipMessage = infoTipMessage {
-                            InfoTip(
-                                title: infoTipTitle,
-                                message: infoTipMessage,
-                                learnMoreURL: infoTipLink ?? ""
-                            )
+                        if let message = infoTipMessage {
+                            if let link = infoTipLink, !link.isEmpty {
+                                InfoTip(message, learnMoreURL: link)
+                            } else {
+                                InfoTip(message)
+                            }
                         }
                     }
                     Text(description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-
+                
                 Spacer()
-
+                
                 // Status indicator with refresh
                 HStack(spacing: 12) {
                     Button(action: {
@@ -135,7 +135,7 @@ struct PermissionCard: View {
                             isRefreshing = true
                         }
                         checkPermission()
-
+                        
                         // Reset the animation after a delay
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             isRefreshing = false
@@ -148,7 +148,7 @@ struct PermissionCard: View {
                     }
                     .buttonStyle(.plain)
                     .contentShape(Rectangle())
-
+                    
                     if isGranted {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 20))
@@ -162,7 +162,7 @@ struct PermissionCard: View {
                     }
                 }
             }
-
+            
             if !isGranted {
                 Button(action: buttonAction) {
                     HStack {
@@ -196,31 +196,17 @@ struct PermissionCard: View {
 struct PermissionsView: View {
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @StateObject private var permissionManager = PermissionManager()
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
                 // Header
-                VStack(spacing: 24) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.blue)
-                        .padding(20)
-                        .background(Circle()
-                            .fill(Color(.windowBackgroundColor).opacity(0.9))
-                            .shadow(color: .black.opacity(0.1), radius: 10, y: 5))
-
-                    VStack(spacing: 8) {
-                        Text("App Permissions")
-                            .font(.system(size: 28, weight: .bold))
-                        Text("VoiceInk requires the following permissions to function properly")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 40)
-                .frame(maxWidth: .infinity)
-
+                CompactHeroSection(
+                    icon: "shield.lefthalf.filled",
+                    title: "App Permissions",
+                    description: "VoiceInk requires the following permissions to function properly"
+                )
+                
                 // Permission Cards
                 VStack(spacing: 16) {
                     // Keyboard Shortcut Permission
@@ -239,7 +225,7 @@ struct PermissionsView: View {
                         },
                         checkPermission: { permissionManager.checkKeyboardShortcut() }
                     )
-
+                    
                     // Audio Permission
                     PermissionCard(
                         icon: "mic",
@@ -258,7 +244,7 @@ struct PermissionsView: View {
                         },
                         checkPermission: { permissionManager.checkAudioPermissionStatus() }
                     )
-
+                    
                     // Accessibility Permission
                     PermissionCard(
                         icon: "hand.raised",
@@ -272,10 +258,9 @@ struct PermissionsView: View {
                             }
                         },
                         checkPermission: { permissionManager.checkAccessibilityPermissions() },
-                        infoTipTitle: "Accessibility Access",
                         infoTipMessage: "VoiceInk uses Accessibility permissions to paste the transcribed text directly into other applications at your cursor's position. This allows for a seamless dictation experience across your Mac."
                     )
-
+                    
                     // Screen Recording Permission
                     PermissionCard(
                         icon: "rectangle.on.rectangle",
@@ -291,7 +276,6 @@ struct PermissionsView: View {
                             }
                         },
                         checkPermission: { permissionManager.checkScreenRecordingPermission() },
-                        infoTipTitle: "Screen Recording Access",
                         infoTipMessage: "VoiceInk captures on-screen text to understand the context of your voice input, which significantly improves transcription accuracy. Your privacy is important: this data is processed locally and is not stored.",
                         infoTipLink: "https://tryvoiceink.com/docs/contextual-awareness"
                     )
@@ -308,4 +292,4 @@ struct PermissionsView: View {
 
 #Preview {
     PermissionsView()
-}
+} 

@@ -6,23 +6,23 @@ struct ModelSettingsView: View {
     @AppStorage("IsTextFormattingEnabled") private var isTextFormattingEnabled = true
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @AppStorage("AppendTrailingSpace") private var appendTrailingSpace = true
+    @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
     @State private var customPrompt: String = ""
     @State private var isEditing: Bool = false
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Output Format")
                     .font(.headline)
-
+                
                 InfoTip(
-                    title: "Output Format Guide",
-                    message: "Unlike GPT, Voice Models(whisper) follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands.",
+                    "Unlike GPT, Voice Models(whisper) follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands.",
                     learnMoreURL: "https://cookbook.openai.com/examples/whisper_prompting_guide#comparison-with-gpt-prompting"
                 )
-
+                
                 Spacer()
-
+                
                 Button(action: {
                     if isEditing {
                         // Save changes
@@ -38,7 +38,7 @@ struct ModelSettingsView: View {
                         .font(.caption)
                 }
             }
-
+            
             if isEditing {
                 TextEditor(text: $customPrompt)
                     .font(.system(size: 12))
@@ -48,7 +48,7 @@ struct ModelSettingsView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
                     )
-
+                
             } else {
                 Text(whisperPrompt.getLanguagePrompt(for: selectedLanguage))
                     .font(.system(size: 12))
@@ -67,28 +67,18 @@ struct ModelSettingsView: View {
 
             Divider().padding(.vertical, 4)
 
-            HStack {
-                Toggle(isOn: $appendTrailingSpace) {
-                    Text("Add space after paste")
-                }
-                .toggleStyle(.switch)
-
-                InfoTip(
-                    title: "Trailing Space",
-                    message: "Automatically add a space after pasted text. Useful for space-delimited languages."
-                )
+            Toggle(isOn: $appendTrailingSpace) {
+                Text("Add Space After Paste")
             }
+            .toggleStyle(.switch)
 
             HStack {
                 Toggle(isOn: $isTextFormattingEnabled) {
                     Text("Automatic text formatting")
                 }
                 .toggleStyle(.switch)
-
-                InfoTip(
-                    title: "Automatic Text Formatting",
-                    message: "Apply intelligent text formatting to break large block of text into paragraphs."
-                )
+                
+                InfoTip("Apply intelligent text formatting to break large block of text into paragraphs.")
             }
 
             HStack {
@@ -97,20 +87,29 @@ struct ModelSettingsView: View {
                 }
                 .toggleStyle(.switch)
 
-                InfoTip(
-                    title: "Voice Activity Detection",
-                    message: "Detect speech segments and filter out silence to improve accuracy of local models."
-                )
+                InfoTip("Detect speech segments and filter out silence to improve accuracy of local models.")
             }
+
+            HStack {
+                Toggle(isOn: $prewarmModelOnWake) {
+                    Text("Prewarm model (Experimental)")
+                }
+                .toggleStyle(.switch)
+
+                InfoTip("Turn this on if transcriptions with local models are taking longer than expected. Runs silent background transcription on app launch and wake to trigger optimization.")
+            }
+
+            FillerWordsSettingsView()
+
         }
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
         // Reset the editor when language changes
-        .onChange(of: selectedLanguage) { _, _ in
+        .onChange(of: selectedLanguage) { oldValue, newValue in
             if isEditing {
                 customPrompt = whisperPrompt.getLanguagePrompt(for: selectedLanguage)
             }
         }
     }
-}
+} 

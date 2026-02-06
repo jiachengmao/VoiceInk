@@ -1,6 +1,6 @@
+import Foundation
 import AppKit
 import AVFoundation
-import Foundation
 
 class SystemInfoService {
     static let shared = SystemInfoService()
@@ -8,7 +8,7 @@ class SystemInfoService {
     private init() {}
 
     func getSystemInfoString() -> String {
-        return """
+        let info = """
         === VOICEINK SYSTEM INFORMATION ===
         Generated: \(Date().formatted(date: .long, time: .standard))
 
@@ -42,11 +42,31 @@ class SystemInfoService {
         AI Provider: \(getAIProvider())
         AI Model: \(getAIModel())
 
+        UI SETTINGS:
+        Menu Bar Only: \(UserDefaults.standard.bool(forKey: "IsMenuBarOnly"))
+
+        CLIPBOARD & PASTE SETTINGS:
+        Restore Clipboard After Paste: \(UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste"))
+        Clipboard Restore Delay: \(UserDefaults.standard.double(forKey: "clipboardRestoreDelay"))s
+        Use AppleScript Paste: \(UserDefaults.standard.bool(forKey: "UseAppleScriptPaste"))
+
+        POWER MODE:
+        Power Mode Enabled: \(UserDefaults.standard.bool(forKey: "powerModeUIFlag"))
+        Auto-Restore Enabled: \(UserDefaults.standard.bool(forKey: "powerModeAutoRestoreEnabled"))
+
+        DATA CLEANUP SETTINGS:
+        Auto-Delete Transcriptions: \(UserDefaults.standard.bool(forKey: "IsTranscriptionCleanupEnabled"))
+        Transcription Retention: \(UserDefaults.standard.integer(forKey: "TranscriptionRetentionMinutes")) minutes
+        Auto-Delete Audio Files: \(UserDefaults.standard.bool(forKey: "IsAudioCleanupEnabled"))
+        Audio Retention Period: \(UserDefaults.standard.integer(forKey: "AudioRetentionPeriod")) days
+
         PERMISSIONS:
         Accessibility: \(getAccessibilityStatus())
         Screen Recording: \(getScreenRecordingStatus())
         Microphone: \(getMicrophoneStatus())
         """
+
+        return info
     }
 
     func copySystemInfoToClipboard() {
@@ -86,19 +106,12 @@ class SystemInfoService {
     }
 
     private func getArchitecture() -> String {
-        #if arch(x86_64)
-            return "Intel x86_64"
-        #elseif arch(arm64)
-            return "Apple Silicon (ARM64)"
-        #else
-            return "Unknown"
-        #endif
+        return SystemArchitecture.current
     }
 
     private func getAudioInputMode() -> String {
         if let mode = UserDefaults.standard.audioInputModeRawValue,
-           let audioMode = AudioInputMode(rawValue: mode)
-        {
+           let audioMode = AudioInputMode(rawValue: mode) {
             return audioMode.rawValue
         }
         return "System Default"
@@ -106,12 +119,11 @@ class SystemInfoService {
 
     private func getCurrentAudioDevice() -> String {
         let audioManager = AudioDeviceManager.shared
-        if let deviceID = audioManager.selectedDeviceID ?? audioManager.fallbackDeviceID,
-           let deviceName = audioManager.getDeviceName(deviceID: deviceID)
-        {
+        let deviceID = audioManager.getCurrentDevice()
+        if deviceID != 0, let deviceName = audioManager.getDeviceName(deviceID: deviceID) {
             return deviceName
         }
-        return "System Default"
+        return "Unknown"
     }
 
     private func getAvailableAudioDevices() -> String {
@@ -124,8 +136,7 @@ class SystemInfoService {
 
     private func getPrimaryHotkey() -> String {
         if let hotkeyRaw = UserDefaults.standard.string(forKey: "selectedHotkey1"),
-           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw)
-        {
+           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw) {
             return hotkey.displayName
         }
         return "Right Command"
@@ -133,8 +144,7 @@ class SystemInfoService {
 
     private func getSecondaryHotkey() -> String {
         if let hotkeyRaw = UserDefaults.standard.string(forKey: "selectedHotkey2"),
-           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw)
-        {
+           let hotkey = HotkeyManager.HotkeyOption(rawValue: hotkeyRaw) {
             return hotkey.displayName
         }
         return "None"
@@ -172,7 +182,6 @@ class SystemInfoService {
         }
         return "None selected"
     }
-
     private func getAccessibilityStatus() -> String {
         return AXIsProcessTrusted() ? "Granted" : "Not Granted"
     }
@@ -197,10 +206,20 @@ class SystemInfoService {
     }
 
     private func getLicenseStatus() -> String {
-        return "Free (Open Source)"
+        let licenseManager = LicenseManager.shared
+
+        // Check for existing license key and activation
+        if licenseManager.licenseKey != nil {
+            if licenseManager.activationId != nil || !UserDefaults.standard.bool(forKey: "VoiceInkLicenseRequiresActivation") {
+                return "Licensed (Pro)"
+            }
+        }
+
+        return "Not Licensed"
     }
 
     private func getCurrentLanguage() -> String {
         return UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
     }
+
 }

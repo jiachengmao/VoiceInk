@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import os
 
 enum CloudTranscriptionError: Error, LocalizedError {
@@ -10,7 +11,7 @@ enum CloudTranscriptionError: Error, LocalizedError {
     case networkError(Error)
     case noTranscriptionReturned
     case dataEncodingError
-
+    
     var errorDescription: String? {
         switch self {
         case .unsupportedProvider:
@@ -21,9 +22,9 @@ enum CloudTranscriptionError: Error, LocalizedError {
             return "The provided API key is invalid."
         case .audioFileNotFound:
             return "The audio file to transcribe could not be found."
-        case let .apiRequestFailed(statusCode, message):
+        case .apiRequestFailed(let statusCode, let message):
             return "The API request failed with status code \(statusCode): \(message)"
-        case let .networkError(error):
+        case .networkError(let error):
             return "A network error occurred: \(error.localizedDescription)"
         case .noTranscriptionReturned:
             return "The API returned an empty or invalid response."
@@ -34,17 +35,23 @@ enum CloudTranscriptionError: Error, LocalizedError {
 }
 
 class CloudTranscriptionService: TranscriptionService {
+    private let modelContext: ModelContext
+
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+
     private lazy var groqService = GroqTranscriptionService()
     private lazy var elevenLabsService = ElevenLabsTranscriptionService()
     private lazy var deepgramService = DeepgramTranscriptionService()
     private lazy var mistralService = MistralTranscriptionService()
     private lazy var geminiService = GeminiTranscriptionService()
     private lazy var openAICompatibleService = OpenAICompatibleTranscriptionService()
-    private lazy var sonioxService = SonioxTranscriptionService()
-
+    private lazy var sonioxService = SonioxTranscriptionService(modelContext: modelContext)
+    
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
         var text: String
-
+        
         switch model.provider {
         case .groq:
             text = try await groqService.transcribe(audioURL: audioURL, model: model)
@@ -66,7 +73,10 @@ class CloudTranscriptionService: TranscriptionService {
         default:
             throw CloudTranscriptionError.unsupportedProvider
         }
-
+        
         return text
     }
-}
+
+    
+
+} 

@@ -99,10 +99,9 @@ struct EmojiPickerView: View {
             }
         }
         .padding()
-        .background(.regularMaterial)
         .frame(minWidth: 260, idealWidth: 300, maxWidth: 320, minHeight: 150, idealHeight: 280, maxHeight: 350)
-        .alert("Emoji in Use", isPresented: $showingEmojiInUseAlert, presenting: emojiForAlert) { _ in
-            Button("OK", role: .cancel) {}
+        .alert("Emoji in Use", isPresented: $showingEmojiInUseAlert, presenting: emojiForAlert) { emojiStr in
+            Button("OK", role: .cancel) { }
         } message: { emojiStr in
             Text("The emoji \"\(emojiStr)\" is currently used by one or more Power Modes and cannot be removed.")
         }
@@ -141,7 +140,8 @@ struct EmojiPickerView: View {
             showingEmojiInUseAlert = true
         } else {
             if emojiManager.removeCustomEmoji(emojiToRemove) {
-                if selectedEmoji == emojiToRemove {}
+                if selectedEmoji == emojiToRemove {
+                }
             }
         }
     }
@@ -158,18 +158,14 @@ private struct EmojiButton: View {
         ZStack(alignment: .topTrailing) {
             Button(action: selectAction) {
                 Text(emoji)
-                    .font(.largeTitle)
+                    .font(.largeTitle) 
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(isSelected ? Color.accentColor.opacity(0.25) : Color.clear)
-                    )
-                    .overlay(
+                    .overlay( 
                         Circle()
                             .strokeBorder(isSelected ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.plain) 
 
             if isCustom {
                 Button(action: removeAction) {
@@ -179,7 +175,7 @@ private struct EmojiButton: View {
                         .font(.caption2)
                         .background(Circle().fill(Color.white.opacity(0.8)))
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.borderless) 
                 .offset(x: 6, y: -6)
             }
         }
@@ -196,10 +192,6 @@ private struct AddEmojiButton: View {
                 .labelStyle(.iconOnly)
                 .foregroundColor(.accentColor)
                 .frame(width: 44, height: 44)
-                .background(
-                    Circle()
-                        .fill(Color.secondary.opacity(0.1))
-                )
                 .overlay(
                     Circle()
                         .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
@@ -212,23 +204,25 @@ private struct AddEmojiButton: View {
 
 extension String {
     var isValidEmoji: Bool {
-        guard !isEmpty else { return false }
-        return count == 1 && unicodeScalars.first?.properties.isEmoji ?? false
+        guard !self.isEmpty else { return false }
+        return self.count == 1 && self.unicodeScalars.first?.properties.isEmoji ?? false
     }
 
     func firstValidEmojiCharacter() -> String {
-        return filter { $0.unicodeScalars.allSatisfy { $0.properties.isEmoji } }.prefix(1).map(String.init).joined()
+        return self.filter { $0.unicodeScalars.allSatisfy { $0.properties.isEmoji } }.prefix(1).map(String.init).joined()
     }
 }
 
 #if DEBUG
-    struct EmojiPickerView_Previews: PreviewProvider {
-        static var previews: some View {
-            EmojiPickerView(
-                selectedEmoji: .constant("😀"),
-                isPresented: .constant(true)
-            )
-            .environmentObject(EmojiManager.shared)
-        }
+struct EmojiPickerView_Previews: PreviewProvider {
+    static var previews: some View {
+        EmojiPickerView(
+            selectedEmoji: .constant("😀"),
+            isPresented: .constant(true)
+        )
+        .environmentObject(EmojiManager.shared)
     }
+}
 #endif
+
+ 

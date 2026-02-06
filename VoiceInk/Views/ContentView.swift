@@ -1,8 +1,8 @@
-import KeyboardShortcuts
-import SwiftData
 import SwiftUI
+import SwiftData
+import KeyboardShortcuts
 
-/// ViewType enum with all cases
+// ViewType enum with all cases
 enum ViewType: String, CaseIterable, Identifiable {
     case metrics = "Dashboard"
     case transcribeAudio = "Transcribe Audio"
@@ -14,10 +14,9 @@ enum ViewType: String, CaseIterable, Identifiable {
     case audioInput = "Audio Input"
     case dictionary = "Dictionary"
     case settings = "Settings"
+    case license = "VoiceInk Pro"
 
-    var id: String {
-        rawValue
-    }
+    var id: String { rawValue }
 
     var icon: String {
         switch self {
@@ -31,6 +30,7 @@ enum ViewType: String, CaseIterable, Identifiable {
         case .audioInput: return "mic.fill"
         case .dictionary: return "character.book.closed.fill"
         case .settings: return "gearshape.fill"
+        case .license: return "checkmark.seal.fill"
         }
     }
 }
@@ -39,7 +39,7 @@ struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
 
-    func makeNSView(context _: Context) -> NSVisualEffectView {
+    func makeNSView(context: Context) -> NSVisualEffectView {
         let visualEffectView = NSVisualEffectView()
         visualEffectView.material = material
         visualEffectView.blendingMode = blendingMode
@@ -47,7 +47,7 @@ struct VisualEffectView: NSViewRepresentable {
         return visualEffectView
     }
 
-    func updateNSView(_ visualEffectView: NSVisualEffectView, context _: Context) {
+    func updateNSView(_ visualEffectView: NSVisualEffectView, context: Context) {
         visualEffectView.material = material
         visualEffectView.blendingMode = blendingMode
     }
@@ -61,6 +61,7 @@ struct ContentView: View {
     @AppStorage("powerModeUIFlag") private var powerModeUIFlag = false
     @State private var selectedView: ViewType? = .metrics
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    @StateObject private var licenseViewModel = LicenseViewModel()
 
     private var visibleViewTypes: [ViewType] {
         ViewType.allCases.filter { viewType in
@@ -88,6 +89,16 @@ struct ContentView: View {
                         Text("VoiceInk")
                             .font(.system(size: 14, weight: .semibold))
 
+                        if case .licensed = licenseViewModel.licenseState {
+                            Text("PRO")
+                                .font(.system(size: 9, weight: .heavy))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
+                                .background(Color.blue)
+                                .cornerRadius(4)
+                        }
+
                         Spacer()
                     }
                     .padding(.vertical, 4)
@@ -95,22 +106,25 @@ struct ContentView: View {
 
                 ForEach(visibleViewTypes) { viewType in
                     Section {
-                        NavigationLink(value: viewType) {
-                            HStack(spacing: 12) {
-                                Image(systemName: viewType.icon)
-                                    .font(.system(size: 18, weight: .medium))
-                                    .frame(width: 24, height: 24)
-
-                                Text(viewType.rawValue)
-                                    .font(.system(size: 14, weight: .medium))
-
-                                Spacer()
+                        if viewType == .history {
+                            Button(action: {
+                                HistoryWindowController.shared.showHistoryWindow(
+                                    modelContainer: modelContext.container,
+                                    whisperState: whisperState
+                                )
+                            }) {
+                                SidebarItemView(viewType: viewType)
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 2)
+                            .buttonStyle(.plain)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowSeparator(.hidden)
+                        } else {
+                            NavigationLink(value: viewType) {
+                                SidebarItemView(viewType: viewType)
+                            }
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowSeparator(.hidden)
                         }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -128,7 +142,8 @@ struct ContentView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 940, minHeight: 730)
+        .frame(width: 950)
+        .frame(minHeight: 730)
         .onReceive(NotificationCenter.default.publisher(for: .navigateToDestination)) { notification in
             if let destination = notification.userInfo?["destination"] as? String {
                 switch destination {
@@ -136,8 +151,13 @@ struct ContentView: View {
                     selectedView = .settings
                 case "AI Models":
                     selectedView = .models
+                case "VoiceInk Pro":
+                    selectedView = .license
                 case "History":
-                    selectedView = .history
+                    HistoryWindowController.shared.showHistoryWindow(
+                        modelContainer: modelContext.container,
+                        whisperState: whisperState
+                    )
                 case "Permissions":
                     selectedView = .permissions
                 case "Enhancement":
@@ -152,7 +172,7 @@ struct ContentView: View {
             }
         }
     }
-
+    
     @ViewBuilder
     private func detailView(for viewType: ViewType) -> some View {
         switch viewType {
@@ -165,7 +185,8 @@ struct ContentView: View {
         case .transcribeAudio:
             AudioTranscribeView()
         case .history:
-            TranscriptionHistoryView()
+            Text("History")
+                .foregroundColor(.secondary)
         case .audioInput:
             AudioInputSettingsView()
         case .dictionary:
@@ -175,8 +196,32 @@ struct ContentView: View {
         case .settings:
             SettingsView()
                 .environmentObject(whisperState)
+        case .license:
+            LicenseManagementView()
         case .permissions:
             PermissionsView()
         }
     }
 }
+
+private struct SidebarItemView: View {
+    let viewType: ViewType
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: viewType.icon)
+                .font(.system(size: 18, weight: .medium))
+                .frame(width: 24, height: 24)
+
+            Text(viewType.rawValue)
+                .font(.system(size: 14, weight: .medium))
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .padding(.vertical, 8)
+        .padding(.horizontal, 2)
+    }
+}
+

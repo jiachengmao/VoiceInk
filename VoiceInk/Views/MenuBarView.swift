@@ -1,5 +1,5 @@
-import LaunchAtLogin
 import SwiftUI
+import LaunchAtLogin
 
 struct MenuBarView: View {
     @EnvironmentObject var whisperState: WhisperState
@@ -8,12 +8,19 @@ struct MenuBarView: View {
     @EnvironmentObject var updaterViewModel: UpdaterViewModel
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var aiService: AIService
+    @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
-    @State private var menuRefreshTrigger = false // Added to force menu updates
+    @State private var menuRefreshTrigger = false
     @State private var isHovered = false
-
+    
     var body: some View {
         VStack {
+            Button("Toggle Recorder") {
+                whisperState.handleToggleMiniRecorder()
+            }
+
+            Divider()
+
             Menu {
                 ForEach(whisperState.usableModels, id: \.id) { model in
                     Button {
@@ -29,9 +36,9 @@ struct MenuBarView: View {
                         }
                     }
                 }
-
+                
                 Divider()
-
+                
                 Button("Manage Models") {
                     menuBarManager.openMainWindowAndNavigate(to: "AI Models")
                 }
@@ -42,11 +49,11 @@ struct MenuBarView: View {
                         .font(.system(size: 10))
                 }
             }
-
+            
             Divider()
-
+            
             Toggle("AI Enhancement", isOn: $enhancementService.isEnhancementEnabled)
-
+            
             Menu {
                 ForEach(enhancementService.allPrompts) { prompt in
                     Button {
@@ -70,8 +77,7 @@ struct MenuBarView: View {
                         .font(.system(size: 10))
                 }
             }
-            .disabled(!enhancementService.isEnhancementEnabled)
-
+            
             Menu {
                 ForEach(aiService.connectedProviders, id: \.self) { provider in
                     Button {
@@ -90,12 +96,6 @@ struct MenuBarView: View {
                     Text("No providers connected")
                         .foregroundColor(.secondary)
                 }
-
-                Divider()
-
-                Button("Manage AI Providers") {
-                    menuBarManager.openMainWindowAndNavigate(to: "Enhancement")
-                }
             } label: {
                 HStack {
                     Text("AI Provider: \(aiService.selectedProvider.rawValue)")
@@ -103,8 +103,7 @@ struct MenuBarView: View {
                         .font(.system(size: 10))
                 }
             }
-            .disabled(!enhancementService.isEnhancementEnabled)
-
+            
             Menu {
                 ForEach(aiService.availableModels, id: \.self) { model in
                     Button {
@@ -123,12 +122,6 @@ struct MenuBarView: View {
                     Text("No models available")
                         .foregroundColor(.secondary)
                 }
-
-                Divider()
-
-                Button("Manage AI Models") {
-                    menuBarManager.openMainWindowAndNavigate(to: "Enhancement")
-                }
             } label: {
                 HStack {
                     Text("AI Model: \(aiService.currentModel)")
@@ -136,9 +129,34 @@ struct MenuBarView: View {
                         .font(.system(size: 10))
                 }
             }
-            .disabled(!enhancementService.isEnhancementEnabled)
-
+            
             LanguageSelectionView(whisperState: whisperState, displayMode: .menuItem, whisperPrompt: whisperState.whisperPrompt)
+
+            Menu {
+                ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
+                    Button {
+                        audioDeviceManager.selectDeviceAndSwitchToCustomMode(id: device.id)
+                    } label: {
+                        HStack {
+                            Text(device.name)
+                            if audioDeviceManager.getCurrentDevice() == device.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+
+                if audioDeviceManager.availableDevices.isEmpty {
+                    Text("No devices available")
+                        .foregroundColor(.secondary)
+                }
+            } label: {
+                HStack {
+                    Text("Audio Input")
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10))
+                }
+            }
 
             Menu("Additional") {
                 Button {
@@ -153,7 +171,6 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .disabled(!enhancementService.isEnhancementEnabled)
 
                 Button {
                     enhancementService.useScreenCaptureContext.toggle()
@@ -167,52 +184,51 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .disabled(!enhancementService.isEnhancementEnabled)
             }
             .id("additional-menu-\(menuRefreshTrigger)")
-
+            
             Divider()
 
             Button("Retry Last Transcription") {
                 LastTranscriptionService.retryLastTranscription(from: whisperState.modelContext, whisperState: whisperState)
             }
-
+            
             Button("Copy Last Transcription") {
                 LastTranscriptionService.copyLastTranscription(from: whisperState.modelContext)
             }
             .keyboardShortcut("c", modifiers: [.command, .shift])
-
+            
             Button("History") {
-                menuBarManager.openMainWindowAndNavigate(to: "History")
+                menuBarManager.openHistoryWindow()
             }
             .keyboardShortcut("h", modifiers: [.command, .shift])
-
+            
             Button("Settings") {
                 menuBarManager.openMainWindowAndNavigate(to: "Settings")
             }
             .keyboardShortcut(",", modifiers: .command)
-
+            
             Button(menuBarManager.isMenuBarOnly ? "Show Dock Icon" : "Hide Dock Icon") {
                 menuBarManager.toggleMenuBarOnly()
             }
             .keyboardShortcut("d", modifiers: [.command, .shift])
-
+            
             Toggle("Launch at Login", isOn: $launchAtLoginEnabled)
-                .onChange(of: launchAtLoginEnabled) { _, newValue in
+                .onChange(of: launchAtLoginEnabled) { oldValue, newValue in
                     LaunchAtLogin.isEnabled = newValue
                 }
-
+            
             Divider()
-
+            
             Button("Check for Updates") {
                 updaterViewModel.checkForUpdates()
             }
             .disabled(!updaterViewModel.canCheckForUpdates)
-
+            
             Button("Help and Support") {
                 EmailSupport.openSupportEmail()
             }
-
+            
             Divider()
 
             Button("Quit VoiceInk") {

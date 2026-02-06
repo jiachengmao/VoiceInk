@@ -1,7 +1,7 @@
-import AppKit
-import AVFoundation
-import KeyboardShortcuts
 import SwiftUI
+import AVFoundation
+import AppKit
+import KeyboardShortcuts
 
 struct OnboardingPermission: Identifiable {
     let id = UUID()
@@ -9,14 +9,14 @@ struct OnboardingPermission: Identifiable {
     let description: String
     let icon: String
     let type: PermissionType
-
+    
     enum PermissionType {
         case microphone
         case audioDeviceSelection
         case accessibility
         case screenRecording
         case keyboardShortcut
-
+        
         var systemName: String {
             switch self {
             case .microphone: return "mic"
@@ -39,7 +39,7 @@ struct OnboardingPermissionsView: View {
     @State private var scale: CGFloat = 0.8
     @State private var opacity: CGFloat = 0
     @State private var showModelDownload = false
-
+    
     private let permissions: [OnboardingPermission] = [
         OnboardingPermission(
             title: "Microphone Access",
@@ -70,20 +70,20 @@ struct OnboardingPermissionsView: View {
             description: "Set up a keyboard shortcut to quickly access VoiceInk from anywhere.",
             icon: "keyboard",
             type: .keyboardShortcut
-        ),
+        )
     ]
-
+    
     var body: some View {
         ZStack {
-            GeometryReader { _ in
+            GeometryReader { geometry in
                 ZStack {
                     // Reusable background
                     OnboardingBackgroundView()
-
+                    
                     VStack(spacing: 40) {
                         // Progress indicator
                         HStack(spacing: 8) {
-                            ForEach(0 ..< permissions.count, id: \.self) { index in
+                            ForEach(0..<permissions.count, id: \.self) { index in
                                 Circle()
                                     .fill(index <= currentPermissionIndex ? Color.accentColor : Color.white.opacity(0.1))
                                     .frame(width: 8, height: 8)
@@ -92,7 +92,7 @@ struct OnboardingPermissionsView: View {
                             }
                         }
                         .padding(.top, 40)
-
+                        
                         // Current permission card
                         VStack(spacing: 30) {
                             // Permission icon
@@ -100,7 +100,7 @@ struct OnboardingPermissionsView: View {
                                 Circle()
                                     .fill(Color.accentColor.opacity(0.1))
                                     .frame(width: 100, height: 100)
-
+                                
                                 if permissionStates[currentPermissionIndex] {
                                     Image(systemName: "checkmark.seal.fill")
                                         .font(.system(size: 50))
@@ -114,7 +114,7 @@ struct OnboardingPermissionsView: View {
                             }
                             .scaleEffect(scale)
                             .opacity(opacity)
-
+                            
                             // Permission text
                             VStack(spacing: 12) {
                                 HStack(spacing: 8) {
@@ -122,16 +122,15 @@ struct OnboardingPermissionsView: View {
                                         .font(.title2)
                                         .fontWeight(.bold)
                                         .foregroundColor(.white)
-
+                                    
                                     if permissions[currentPermissionIndex].type == .screenRecording {
                                         InfoTip(
-                                            title: "Screen Recording Access",
-                                            message: "VoiceInk captures on-screen text to understand the context of your voice input, which significantly improves transcription accuracy. Your privacy is important: this data is processed locally and is not stored.",
+                                            "VoiceInk captures on-screen text to understand the context of your voice input, which significantly improves transcription accuracy. Your privacy is important: this data is processed locally and is not stored.",
                                             learnMoreURL: "https://tryvoiceink.com/docs/contextual-awareness"
                                         )
                                     }
                                 }
-
+                                
                                 Text(permissions[currentPermissionIndex].description)
                                     .font(.body)
                                     .foregroundColor(.white.opacity(0.7))
@@ -140,7 +139,7 @@ struct OnboardingPermissionsView: View {
                             }
                             .scaleEffect(scale)
                             .opacity(opacity)
-
+                            
                             // Audio device selection (only shown for audio device selection step)
                             if permissions[currentPermissionIndex].type == .audioDeviceSelection {
                                 VStack(spacing: 20) {
@@ -150,7 +149,7 @@ struct OnboardingPermissionsView: View {
                                                 .font(.system(size: 36))
                                                 .symbolRenderingMode(.hierarchical)
                                                 .foregroundStyle(.secondary)
-
+                                            
                                             Text("No microphones found")
                                                 .font(.subheadline)
                                                 .foregroundStyle(.secondary)
@@ -175,15 +174,9 @@ struct OnboardingPermissionsView: View {
                                             }
                                         )
                                         .onAppear {
-                                            // Auto-select built-in microphone if no device is selected
-                                            if audioDeviceManager.selectedDeviceID == nil && !audioDeviceManager.availableDevices.isEmpty {
-                                                let builtInDevice = audioDeviceManager.availableDevices.first { device in
-                                                    device.name.lowercased().contains("built-in") ||
-                                                        device.name.lowercased().contains("internal")
-                                                }
-                                                let deviceToSelect = builtInDevice ?? audioDeviceManager.availableDevices.first
-                                                if let device = deviceToSelect {
-                                                    audioDeviceManager.selectDevice(id: device.id)
+                                            if !audioDeviceManager.availableDevices.isEmpty {
+                                                if let deviceID = audioDeviceManager.findBestAvailableDevice() {
+                                                    audioDeviceManager.selectDevice(id: deviceID)
                                                     audioDeviceManager.selectInputMode(.custom)
                                                     withAnimation {
                                                         permissionStates[currentPermissionIndex] = true
@@ -193,7 +186,7 @@ struct OnboardingPermissionsView: View {
                                             }
                                         }
                                     }
-
+                                    
                                     Text("For best results, using your Mac's built-in microphone is recommended.")
                                         .font(.caption)
                                         .foregroundColor(.white.opacity(0.7))
@@ -203,7 +196,7 @@ struct OnboardingPermissionsView: View {
                                 .scaleEffect(scale)
                                 .opacity(opacity)
                             }
-
+                            
                             // Keyboard shortcut recorder (only shown for keyboard shortcut step)
                             if permissions[currentPermissionIndex].type == .keyboardShortcut {
                                 hotkeyView(
@@ -221,7 +214,7 @@ struct OnboardingPermissionsView: View {
                         }
                         .frame(maxWidth: 400)
                         .padding(.vertical, 40)
-
+                        
                         // Action buttons
                         VStack(spacing: 16) {
                             Button(action: requestPermission) {
@@ -233,11 +226,10 @@ struct OnboardingPermissionsView: View {
                                     .cornerRadius(25)
                             }
                             .buttonStyle(ScaleButtonStyle())
-
-                            if !permissionStates[currentPermissionIndex] &&
-                                permissions[currentPermissionIndex].type != .keyboardShortcut &&
-                                permissions[currentPermissionIndex].type != .audioDeviceSelection
-                            {
+                            
+                            if !permissionStates[currentPermissionIndex] && 
+                               permissions[currentPermissionIndex].type != .keyboardShortcut &&
+                               permissions[currentPermissionIndex].type != .audioDeviceSelection {
                                 SkipButton(text: "Skip for now") {
                                     moveToNext()
                                 }
@@ -248,7 +240,7 @@ struct OnboardingPermissionsView: View {
                     .padding()
                 }
             }
-
+            
             if showModelDownload {
                 OnboardingModelDownloadView(hasCompletedOnboarding: $hasCompletedOnboarding)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -261,43 +253,43 @@ struct OnboardingPermissionsView: View {
             audioDeviceManager.loadAvailableDevices()
         }
     }
-
+    
     private func animateIn() {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             scale = 1
             opacity = 1
         }
     }
-
+    
     private func resetAnimation() {
         scale = 0.8
         opacity = 0
         animateIn()
     }
-
+    
     private func checkExistingPermissions() {
         // Check microphone permission
         permissionStates[0] = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-
-        // Check if device is selected or system default mode is being used
-        permissionStates[1] = audioDeviceManager.selectedDeviceID != nil || audioDeviceManager.inputMode == .systemDefault
-
+        
+        // Check if device is selected
+        permissionStates[1] = audioDeviceManager.selectedDeviceID != nil
+        
         // Check accessibility permission
         permissionStates[2] = AXIsProcessTrusted()
-
+        
         // Check screen recording permission
         permissionStates[3] = CGPreflightScreenCaptureAccess()
-
+        
         // Check keyboard shortcut
         permissionStates[4] = hotkeyManager.isShortcutConfigured
     }
-
+    
     private func requestPermission() {
         if permissionStates[currentPermissionIndex] {
             moveToNext()
             return
         }
-
+        
         switch permissions[currentPermissionIndex].type {
         case .microphone:
             AVCaptureDevice.requestAccess(for: .audio) { granted in
@@ -311,12 +303,12 @@ struct OnboardingPermissionsView: View {
                     }
                 }
             }
-
+            
         case .audioDeviceSelection:
             audioDeviceManager.loadAvailableDevices()
 
             if audioDeviceManager.availableDevices.isEmpty {
-                audioDeviceManager.selectInputMode(.systemDefault)
+                audioDeviceManager.selectInputMode(.custom)
                 withAnimation {
                     permissionStates[currentPermissionIndex] = true
                     showAnimation = true
@@ -325,30 +317,20 @@ struct OnboardingPermissionsView: View {
                 return
             }
 
-            // If no device is selected yet, auto-select the built-in microphone or first available device
-            if audioDeviceManager.selectedDeviceID == nil {
-                let builtInDevice = audioDeviceManager.availableDevices.first { device in
-                    device.name.lowercased().contains("built-in") ||
-                        device.name.lowercased().contains("internal")
-                }
-
-                let deviceToSelect = builtInDevice ?? audioDeviceManager.availableDevices.first
-
-                if let device = deviceToSelect {
-                    audioDeviceManager.selectDevice(id: device.id)
-                    audioDeviceManager.selectInputMode(.custom)
-                    withAnimation {
-                        permissionStates[currentPermissionIndex] = true
-                        showAnimation = true
-                    }
+            if let deviceID = audioDeviceManager.findBestAvailableDevice() {
+                audioDeviceManager.selectDevice(id: deviceID)
+                audioDeviceManager.selectInputMode(.custom)
+                withAnimation {
+                    permissionStates[currentPermissionIndex] = true
+                    showAnimation = true
                 }
             }
             moveToNext()
-
+            
         case .accessibility:
             let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
             AXIsProcessTrustedWithOptions(options)
-
+            
             // Start checking for permission status
             Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
                 if AXIsProcessTrusted() {
@@ -359,16 +341,16 @@ struct OnboardingPermissionsView: View {
                     }
                 }
             }
-
+            
         case .screenRecording:
             // First try to request permission programmatically
             CGRequestScreenCaptureAccess()
-
+            
             // Also open system preferences as fallback
             if let prefpaneURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
                 NSWorkspace.shared.open(prefpaneURL)
             }
-
+            
             // Start checking for permission status
             Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
                 if CGPreflightScreenCaptureAccess() {
@@ -379,13 +361,13 @@ struct OnboardingPermissionsView: View {
                     }
                 }
             }
-
+            
         case .keyboardShortcut:
             // The keyboard shortcut is handled by the KeyboardShortcuts.Recorder
             break
         }
     }
-
+    
     private func moveToNext() {
         if currentPermissionIndex < permissions.count - 1 {
             withAnimation {
@@ -398,7 +380,7 @@ struct OnboardingPermissionsView: View {
             }
         }
     }
-
+    
     private func getButtonTitle() -> String {
         switch permissions[currentPermissionIndex].type {
         case .keyboardShortcut:
@@ -410,6 +392,7 @@ struct OnboardingPermissionsView: View {
         }
     }
 
+    @ViewBuilder
     private func styledPicker<T: Hashable>(
         label: String,
         selectedValue: T,
@@ -421,11 +404,11 @@ struct OnboardingPermissionsView: View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
                 Spacer()
-
+                
                 Text(label)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
-
+                
                 Menu {
                     ForEach(options, id: \.self) { option in
                         Button(action: {
@@ -459,7 +442,7 @@ struct OnboardingPermissionsView: View {
                     )
                 }
                 .menuStyle(.borderlessButton)
-
+                
                 Spacer()
             }
         }
@@ -468,6 +451,7 @@ struct OnboardingPermissionsView: View {
         .cornerRadius(12)
     }
 
+    @ViewBuilder
     private func hotkeyView(
         binding: Binding<HotkeyManager.HotkeyOption>,
         shortcutName: KeyboardShortcuts.Name,

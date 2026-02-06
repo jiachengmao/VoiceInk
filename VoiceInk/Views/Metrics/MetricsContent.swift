@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MetricsContent: View {
     let transcriptions: [Transcription]
-    let licenseState: LicenseViewModel.LicenseState
 
     var body: some View {
         Group {
@@ -16,7 +15,6 @@ struct MetricsContent: View {
                             metricsSection
                             HStack(alignment: .top, spacing: 18) {
                                 HelpAndResourcesSection()
-                                DashboardPromotionsSection(licenseState: licenseState)
                             }
 
                             Spacer(minLength: 20)

@@ -165,6 +165,8 @@ struct SettingsView: View {
                     label: "Restore Clipboard After Paste"
                 ) {
                     Picker("Restore Delay", selection: $clipboardRestoreDelay) {
+                        Text("250ms").tag(0.25)
+                        Text("500ms").tag(0.5)
                         Text("1s").tag(1.0)
                         Text("2s").tag(2.0)
                         Text("3s").tag(3.0)
@@ -185,15 +187,6 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
 
-                Toggle(isOn: Binding(
-                    get: { UserDefaults.standard.bool(forKey: "UseAppleScriptPaste") },
-                    set: { UserDefaults.standard.set($0, forKey: "UseAppleScriptPaste") }
-                )) {
-                    HStack(spacing: 4) {
-                        Text("AppleScript Paste")
-                        InfoTip("Paste via System Events instead of direct keystrokes. Try this if paste isn't working in some apps.")
-                    }
-                }
             }
 
             // MARK: - Experimental
@@ -238,48 +231,6 @@ struct SettingsView: View {
                 Text("Privacy")
             } footer: {
                 Text("Control how VoiceInk handles your transcription data and audio recordings.")
-            }
-
-            // MARK: - Data Management
-            Section {
-                LabeledContent {
-                    Button("Import") {
-                        ImportExportService.shared.importSettings(
-                            enhancementService: enhancementService,
-                            whisperPrompt: whisperState.whisperPrompt,
-                            hotkeyManager: hotkeyManager,
-                            menuBarManager: menuBarManager,
-                            mediaController: MediaController.shared,
-                            playbackController: PlaybackController.shared,
-                            soundManager: SoundManager.shared,
-                            whisperState: whisperState
-                        )
-                    }
-                } label: {
-                    Text("Import Settings")
-                }
-
-                LabeledContent {
-                    Button("Export") {
-                        ImportExportService.shared.exportSettings(
-                            enhancementService: enhancementService,
-                            whisperPrompt: whisperState.whisperPrompt,
-                            hotkeyManager: hotkeyManager,
-                            menuBarManager: menuBarManager,
-                            mediaController: MediaController.shared,
-                            playbackController: PlaybackController.shared,
-                            soundManager: SoundManager.shared,
-                            whisperState: whisperState
-                        )
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("Export Settings")
-                        InfoTip("Export prompts, power modes, word replacements, shortcuts, and preferences. API keys are never included.")
-                    }
-                }
-            } header: {
-                Text("Data Management")
             }
 
             // MARK: - Diagnostics

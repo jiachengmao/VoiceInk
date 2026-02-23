@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 enum SupportedMedia {
     static let extensions: Set<String> = [
         "wav", "mp3", "m4a", "aiff", "mp4", "mov", "aac", "flac", "caf",
+        "amr", "ogg", "oga", "opus", "3gp"
     ]
 
     static let contentTypes: [UTType] = [

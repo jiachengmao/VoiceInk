@@ -1,5 +1,5 @@
-import AppKit
 import SwiftUI
+import AppKit
 
 class MiniWindowManager: ObservableObject {
     @Published var isVisible = false
@@ -7,17 +7,17 @@ class MiniWindowManager: ObservableObject {
     private var miniPanel: MiniRecorderPanel?
     private let whisperState: WhisperState
     private let recorder: Recorder
-
+    
     init(whisperState: WhisperState, recorder: Recorder) {
         self.whisperState = whisperState
         self.recorder = recorder
         setupNotifications()
     }
-
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-
+    
     private func setupNotifications() {
         NotificationCenter.default.addObserver(
             self,
@@ -26,57 +26,56 @@ class MiniWindowManager: ObservableObject {
             object: nil
         )
     }
-
+    
     @objc private func handleHideNotification() {
         hide()
     }
-
     func show() {
         if isVisible { return }
 
         let activeScreen = NSApp.keyWindow?.screen ?? NSScreen.main ?? NSScreen.screens[0]
 
         initializeWindow(screen: activeScreen)
-        isVisible = true
+        self.isVisible = true 
         miniPanel?.show()
     }
 
     func hide() {
         guard isVisible else { return }
 
-        isVisible = false
-        miniPanel?.hide { [weak self] in
+        self.isVisible = false
+        self.miniPanel?.hide { [weak self] in
             guard let self = self else { return }
             self.deinitializeWindow()
         }
     }
-
-    private func initializeWindow(screen _: NSScreen) {
+    
+    private func initializeWindow(screen: NSScreen) {
         deinitializeWindow()
-
+        
         let metrics = MiniRecorderPanel.calculateWindowMetrics()
         let panel = MiniRecorderPanel(contentRect: metrics)
-
+        
         let miniRecorderView = MiniRecorderView(whisperState: whisperState, recorder: recorder)
             .environmentObject(self)
             .environmentObject(whisperState.enhancementService!)
-
+        
         let hostingController = NSHostingController(rootView: miniRecorderView)
         panel.contentView = hostingController.view
-
-        miniPanel = panel
-        windowController = NSWindowController(window: panel)
-
+        
+        self.miniPanel = panel
+        self.windowController = NSWindowController(window: panel)
+        
         panel.orderFrontRegardless()
     }
-
+    
     private func deinitializeWindow() {
         miniPanel?.orderOut(nil)
         windowController?.close()
         windowController = nil
         miniPanel = nil
     }
-
+    
     func toggle() {
         if isVisible {
             hide()
@@ -84,4 +83,4 @@ class MiniWindowManager: ObservableObject {
             show()
         }
     }
-}
+} 

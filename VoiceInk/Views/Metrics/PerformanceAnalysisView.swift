@@ -1,136 +1,13 @@
 import SwiftUI
 
-struct PerformanceAnalysisView: View {
-    @Environment(\.dismiss) private var dismiss
-    let transcriptions: [Transcription]
-    private let analysis: AnalysisResult
+// MARK: - Shared Analysis Logic
 
-    private let columns: [GridItem] = [
-        GridItem(.adaptive(minimum: 250), spacing: 16),
-    ]
+enum PanelMode {
+    case info
+    case analysis
+}
 
-    init(transcriptions: [Transcription]) {
-        self.transcriptions = transcriptions
-        analysis = Self.analyze(transcriptions: transcriptions)
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            header
-                .padding()
-
-            Divider()
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 30) {
-                    summarySection
-
-                    systemInfoSection
-
-                    if !analysis.transcriptionModels.isEmpty {
-                        transcriptionPerformanceSection
-                    }
-
-                    if !analysis.enhancementModels.isEmpty {
-                        enhancementPerformanceSection
-                    }
-                }
-                .padding()
-            }
-        }
-        .frame(minWidth: 550, idealWidth: 600, maxWidth: 700, minHeight: 600, idealHeight: 750, maxHeight: 900)
-        .background(Color(.windowBackgroundColor))
-    }
-
-    private var header: some View {
-        HStack {
-            Text("Performance Analysis")
-                .font(.title2)
-                .fontWeight(.bold)
-            Spacer()
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-            }
-            .buttonStyle(.borderless)
-        }
-    }
-
-    private var summarySection: some View {
-        HStack(spacing: 12) {
-            SummaryCard(
-                icon: "doc.text.fill",
-                value: "\(analysis.totalTranscripts)",
-                label: "Total Transcripts",
-                color: .indigo
-            )
-            SummaryCard(
-                icon: "waveform.path.ecg",
-                value: "\(analysis.totalWithTranscriptionData)",
-                label: "Analyzable",
-                color: .teal
-            )
-            SummaryCard(
-                icon: "sparkles",
-                value: "\(analysis.totalEnhancedFiles)",
-                label: "Enhanced",
-                color: .mint
-            )
-        }
-    }
-
-    private var systemInfoSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("System Information")
-                .font(.system(.title2, design: .default, weight: .bold))
-                .foregroundColor(.primary)
-
-            HStack(spacing: 12) {
-                SystemInfoCard(label: "Device", value: getMacModel())
-                SystemInfoCard(label: "Processor", value: getCPUInfo())
-                SystemInfoCard(label: "Memory", value: getMemoryInfo())
-            }
-        }
-    }
-
-    private var transcriptionPerformanceSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Transcription Models")
-                .font(.system(.title2, design: .default, weight: .bold))
-                .foregroundColor(.primary)
-
-            LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(analysis.transcriptionModels) { modelStat in
-                    TranscriptionModelCard(modelStat: modelStat)
-                }
-            }
-        }
-    }
-
-    private var enhancementPerformanceSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Enhancement Models")
-                .font(.system(.title2, design: .default, weight: .bold))
-                .foregroundColor(.primary)
-
-            LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(analysis.enhancementModels) { modelStat in
-                    EnhancementModelCard(modelStat: modelStat)
-                }
-            }
-        }
-    }
-
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.minute, .second]
-        formatter.unitsStyle = .abbreviated
-        return formatter.string(from: duration) ?? "0s"
-    }
-
-    // MARK: - Analysis Logic
-
+struct PerformanceAnalyzer {
     struct AnalysisResult {
         let totalTranscripts: Int
         let totalWithTranscriptionData: Int
@@ -147,7 +24,7 @@ struct PerformanceAnalysisView: View {
         let totalProcessingTime: TimeInterval
         let avgProcessingTime: TimeInterval
         let avgAudioDuration: TimeInterval
-        let speedFactor: Double // RTFX
+        let speedFactor: Double
     }
 
     static func analyze(transcriptions: [Transcription]) -> AnalysisResult {
@@ -182,8 +59,8 @@ struct PerformanceAnalysisView: View {
     static func processStats(for transcriptions: [Transcription],
                              modelNameKeyPath: KeyPath<Transcription, String?>,
                              durationKeyPath: KeyPath<Transcription, TimeInterval?>,
-                             audioDurationKeyPath: KeyPath<Transcription, TimeInterval>? = nil) -> [ModelStat]
-    {
+                             audioDurationKeyPath: KeyPath<Transcription, TimeInterval>? = nil) -> [ModelStat] {
+
         let relevantTranscriptions = transcriptions.filter {
             $0[keyPath: modelNameKeyPath] != nil && $0[keyPath: durationKeyPath] != nil
         }
@@ -215,29 +92,159 @@ struct PerformanceAnalysisView: View {
             )
         }.sorted { $0.avgProcessingTime < $1.avgProcessingTime }
     }
+
+    static func getMacModel() -> String {
+        var size = 0
+        sysctlbyname("hw.model", nil, &size, nil, 0)
+        var machine = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.model", &machine, &size, nil, 0)
+        return String(cString: machine)
+    }
+
+    static func getCPUInfo() -> String {
+        var size = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        var buffer = [CChar](repeating: 0, count: size)
+        sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
+        return String(cString: buffer)
+    }
+
+    static func getMemoryInfo() -> String {
+        let totalMemory = ProcessInfo.processInfo.physicalMemory
+        return ByteCountFormatter.string(fromByteCount: Int64(totalMemory), countStyle: .memory)
+    }
 }
 
-// MARK: - Helper Functions for System Info
+// MARK: - Sheet View (existing)
 
-private func getMacModel() -> String {
-    var size = 0
-    sysctlbyname("hw.model", nil, &size, nil, 0)
-    var machine = [CChar](repeating: 0, count: size)
-    sysctlbyname("hw.model", &machine, &size, nil, 0)
-    return String(cString: machine)
-}
+struct PerformanceAnalysisView: View {
+    @Environment(\.dismiss) private var dismiss
+    let transcriptions: [Transcription]
+    private let analysis: PerformanceAnalyzer.AnalysisResult
 
-private func getCPUInfo() -> String {
-    var size = 0
-    sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
-    var buffer = [CChar](repeating: 0, count: size)
-    sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
-    return String(cString: buffer)
-}
+    private let columns: [GridItem] = [
+        GridItem(.adaptive(minimum: 250), spacing: 16)
+    ]
 
-private func getMemoryInfo() -> String {
-    let totalMemory = ProcessInfo.processInfo.physicalMemory
-    return ByteCountFormatter.string(fromByteCount: Int64(totalMemory), countStyle: .memory)
+    init(transcriptions: [Transcription]) {
+        self.transcriptions = transcriptions
+        self.analysis = PerformanceAnalyzer.analyze(transcriptions: transcriptions)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+                .padding()
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 30) {
+                    summarySection
+                    
+                    systemInfoSection
+                    
+                    if !analysis.transcriptionModels.isEmpty {
+                        transcriptionPerformanceSection
+                    }
+                    
+                    if !analysis.enhancementModels.isEmpty {
+                        enhancementPerformanceSection
+                    }
+                }
+                .padding()
+            }
+        }
+        .frame(minWidth: 550, idealWidth: 600, maxWidth: 700, minHeight: 600, idealHeight: 750, maxHeight: 900)
+        .background(Color(.windowBackgroundColor))
+    }
+
+    private var header: some View {
+        HStack {
+            Text("Performance Analysis")
+                .font(.title2)
+                .fontWeight(.bold)
+            Spacer()
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+
+    private var summarySection: some View {
+        HStack(spacing: 12) {
+            SummaryCard(
+                icon: "doc.text.fill", 
+                value: "\(analysis.totalTranscripts)", 
+                label: "Total Transcripts",
+                color: .indigo
+            )
+            SummaryCard(
+                icon: "waveform.path.ecg", 
+                value: "\(analysis.totalWithTranscriptionData)", 
+                label: "Analyzable",
+                color: .teal
+            )
+            SummaryCard(
+                icon: "sparkles", 
+                value: "\(analysis.totalEnhancedFiles)", 
+                label: "Enhanced",
+                color: .mint
+            )
+        }
+    }
+
+    private var systemInfoSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("System Information")
+                .font(.system(.title2, design: .default, weight: .bold))
+                .foregroundColor(.primary)
+
+            HStack(spacing: 12) {
+                SystemInfoCard(label: "Device", value: PerformanceAnalyzer.getMacModel())
+                SystemInfoCard(label: "Processor", value: PerformanceAnalyzer.getCPUInfo())
+                SystemInfoCard(label: "Memory", value: PerformanceAnalyzer.getMemoryInfo())
+            }
+        }
+    }
+
+    private var transcriptionPerformanceSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Transcription Models")
+                .font(.system(.title2, design: .default, weight: .bold))
+                .foregroundColor(.primary)
+
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(analysis.transcriptionModels) { modelStat in
+                    TranscriptionModelCard(modelStat: modelStat)
+                }
+            }
+        }
+    }
+
+    private var enhancementPerformanceSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Enhancement Models")
+                .font(.system(.title2, design: .default, weight: .bold))
+                .foregroundColor(.primary)
+
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(analysis.enhancementModels) { modelStat in
+                    EnhancementModelCard(modelStat: modelStat)
+                }
+            }
+        }
+    }
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: duration) ?? "0s"
+    }
 }
 
 // MARK: - Subviews
@@ -253,11 +260,11 @@ struct SummaryCard: View {
             Image(systemName: icon)
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(color)
-
+            
             Text(value)
                 .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundColor(.primary)
-
+            
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -296,7 +303,7 @@ struct SystemInfoCard: View {
                 .font(.caption.weight(.medium))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
-
+            
             Text(value)
                 .font(.system(.body, design: .default, weight: .semibold))
                 .foregroundColor(.primary)
@@ -311,7 +318,7 @@ struct SystemInfoCard: View {
 }
 
 struct TranscriptionModelCard: View {
-    let modelStat: PerformanceAnalysisView.ModelStat
+    let modelStat: PerformanceAnalyzer.ModelStat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -324,12 +331,12 @@ struct TranscriptionModelCard: View {
                     .minimumScaleFactor(0.7)
 
                 Spacer()
-
+                
                 Text("\(modelStat.fileCount) transcripts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-
+            
             Divider()
 
             VStack(spacing: 16) {
@@ -343,7 +350,7 @@ struct TranscriptionModelCard: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-
+                
                 Divider()
 
                 // Secondary metrics
@@ -366,7 +373,7 @@ struct TranscriptionModelCard: View {
         .background(MetricCardBackground(color: .mint))
         .cornerRadius(12)
     }
-
+    
     private func formatDuration(_ duration: TimeInterval) -> String {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
@@ -376,7 +383,7 @@ struct TranscriptionModelCard: View {
 }
 
 struct EnhancementModelCard: View {
-    let modelStat: PerformanceAnalysisView.ModelStat
+    let modelStat: PerformanceAnalyzer.ModelStat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -389,14 +396,14 @@ struct EnhancementModelCard: View {
                     .minimumScaleFactor(0.7)
 
                 Spacer()
-
+                
                 Text("\(modelStat.fileCount) transcripts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-
+            
             Divider()
-
+            
             VStack(alignment: .center) {
                 Text(String(format: "%.2f s", modelStat.avgProcessingTime))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
@@ -415,14 +422,14 @@ struct EnhancementModelCard: View {
 
 struct MetricCardBackground: View {
     let color: Color
-
+    
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(
                 LinearGradient(
                     gradient: Gradient(stops: [
                         .init(color: color.opacity(0.15), location: 0),
-                        .init(color: Color(NSColor.windowBackgroundColor).opacity(0.1), location: 0.6),
+                        .init(color: Color(NSColor.windowBackgroundColor).opacity(0.1), location: 0.6)
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -434,7 +441,7 @@ struct MetricCardBackground: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 Color(NSColor.quaternaryLabelColor).opacity(0.3),
-                                Color(NSColor.quaternaryLabelColor).opacity(0.1),
+                                Color(NSColor.quaternaryLabelColor).opacity(0.1)
                             ]),
                             startPoint: .top,
                             endPoint: .bottom
@@ -450,7 +457,7 @@ struct MetricDisplay: View {
     let title: String
     let value: String
     let color: Color
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -458,7 +465,7 @@ struct MetricDisplay: View {
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.5)
-
+            
             Text(value)
                 .font(.system(.body, design: .monospaced, weight: .semibold))
                 .foregroundColor(color)

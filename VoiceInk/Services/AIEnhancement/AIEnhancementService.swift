@@ -67,7 +67,10 @@ class AIEnhancementService: ObservableObject {
     private let aiService: AIService
     private let screenCaptureService: ScreenCaptureService
     private let customVocabularyService: CustomVocabularyService
-    private let baseTimeout: TimeInterval = 30
+    private var baseTimeout: TimeInterval {
+        let stored = UserDefaults.standard.integer(forKey: "EnhancementTimeoutSeconds")
+        return stored > 0 ? TimeInterval(stored) : 7
+    }
     private let rateLimitInterval: TimeInterval = 1.0
     private var lastRequestTime: Date?
     private let modelContext: ModelContext
@@ -83,7 +86,6 @@ class AIEnhancementService: ObservableObject {
         self.isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
         self.useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")
         self.useScreenCaptureContext = UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
-
         if let savedPromptsData = UserDefaults.standard.data(forKey: "customPrompts"),
            let decodedPrompts = try? JSONDecoder().decode([CustomPrompt].self, from: savedPromptsData) {
             self.customPrompts = decodedPrompts
@@ -229,6 +231,19 @@ class AIEnhancementService: ObservableObject {
             }
         }
 
+        if aiService.selectedProvider == .localCLI {
+            do {
+                let result = try await aiService.enhanceWithLocalCLI(systemPrompt: systemMessage, userPrompt: formattedText)
+                return AIEnhancementOutputFilter.filter(result)
+            } catch {
+                if let localError = error as? LocalCLIError {
+                    throw EnhancementError.customError(localError.errorDescription ?? "An unknown Local CLI error occurred.")
+                } else {
+                    throw EnhancementError.customError(error.localizedDescription)
+                }
+            }
+        }
+
         try await waitForRateLimit()
 
         do {
@@ -248,6 +263,7 @@ class AIEnhancementService: ObservableObject {
                 }
                 let temperature = aiService.currentModel.lowercased().hasPrefix("gpt-5") ? 1.0 : 0.3
                 let reasoningEffort = ReasoningConfig.getReasoningParameter(for: aiService.currentModel)
+                let extraBody = ReasoningConfig.getExtraBodyParameters(for: aiService.currentModel)
                 result = try await OpenAILLMClient.chatCompletion(
                     baseURL: baseURL,
                     apiKey: aiService.apiKey,
@@ -256,6 +272,7 @@ class AIEnhancementService: ObservableObject {
                     systemPrompt: systemMessage,
                     temperature: temperature,
                     reasoningEffort: reasoningEffort,
+                    extraBody: extraBody,
                     timeout: baseTimeout
                 )
             }
@@ -281,9 +298,15 @@ class AIEnhancementService: ObservableObject {
             return .enhancementFailed
         case .networkError:
             return .networkError
-        case .invalidURL, .decodingError, .encodingError, .timeout:
+        case .timeout:
+            return .timeout
+        case .invalidURL, .decodingError, .encodingError:
             return .customError(error.localizedDescription ?? "An unknown error occurred.")
         }
+    }
+
+    private var retryOnTimeout: Bool {
+        UserDefaults.standard.bool(forKey: "EnhancementRetryOnTimeout")
     }
 
     private func makeRequestWithRetry(text: String, mode: EnhancementPrompt, maxRetries: Int = 3, initialDelay: TimeInterval = 1.0) async throws -> String {
@@ -298,11 +321,24 @@ class AIEnhancementService: ObservableObject {
                 case .networkError, .serverError, .rateLimitExceeded:
                     retries += 1
                     if retries < maxRetries {
-                        logger.warning("Request failed, retrying in \(currentDelay)s... (Attempt \(retries)/\(maxRetries))")
+                        logger.warning("Request failed, retrying in \(currentDelay, privacy: .public)s... (Attempt \(retries, privacy: .public)/\(maxRetries, privacy: .public))")
                         try await Task.sleep(nanoseconds: UInt64(currentDelay * 1_000_000_000))
                         currentDelay *= 2
                     } else {
-                        logger.error("Request failed after \(maxRetries) retries.")
+                        logger.error("Request failed after \(maxRetries, privacy: .public) retries.")
+                        throw error
+                    }
+                case .timeout:
+                    if retryOnTimeout {
+                        retries += 1
+                        if retries < maxRetries {
+                            logger.warning("Request timed out, retrying immediately... (Attempt \(retries, privacy: .public)/\(maxRetries, privacy: .public))")
+                        } else {
+                            logger.error("Request timed out after \(maxRetries, privacy: .public) retries.")
+                            throw error
+                        }
+                    } else {
+                        logger.error("Request timed out, failing immediately (retry disabled).")
                         throw error
                     }
                 default:
@@ -313,11 +349,11 @@ class AIEnhancementService: ObservableObject {
                 if nsError.domain == NSURLErrorDomain && [NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost].contains(nsError.code) {
                     retries += 1
                     if retries < maxRetries {
-                        logger.warning("Request failed with network error, retrying in \(currentDelay)s... (Attempt \(retries)/\(maxRetries))")
+                        logger.warning("Request failed with network error, retrying in \(currentDelay, privacy: .public)s... (Attempt \(retries, privacy: .public)/\(maxRetries, privacy: .public))")
                         try await Task.sleep(nanoseconds: UInt64(currentDelay * 1_000_000_000))
                         currentDelay *= 2
                     } else {
-                        logger.error("Request failed after \(maxRetries) retries with network error.")
+                        logger.error("Request failed after \(maxRetries, privacy: .public) retries with network error.")
                         throw EnhancementError.networkError
                     }
                 } else {
@@ -422,6 +458,7 @@ enum EnhancementError: Error {
     case networkError
     case serverError
     case rateLimitExceeded
+    case timeout
     case customError(String)
 }
 
@@ -440,6 +477,8 @@ extension EnhancementError: LocalizedError {
             return "The AI provider's server encountered an error. Please try again later."
         case .rateLimitExceeded:
             return "Rate limit exceeded. Please try again later."
+        case .timeout:
+            return "Enhancement request timed out. Check your connection or increase the timeout duration."
         case .customError(let message):
             return message
         }

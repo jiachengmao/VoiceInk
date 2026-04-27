@@ -6,7 +6,8 @@ struct AppNotificationView: View {
     let duration: TimeInterval
     let onClose: () -> Void
     let onTap: (() -> Void)?
-
+    var actionButton: (label: String, action: () -> Void)? = nil
+    
     @State private var progress: Double = 1.0
     @State private var timer: Timer?
 
@@ -51,8 +52,24 @@ struct AppNotificationView: View {
                     .foregroundColor(.white)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-
+                
                 Spacer()
+
+                if let actionButton {
+                    Button(action: {
+                        actionButton.action()
+                        onClose()
+                    }) {
+                        Text(actionButton.label)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(type.iconColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(type.iconColor.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -73,17 +90,17 @@ struct AppNotificationView: View {
                     ZStack {
                         // Base dark background
                         Color.black.opacity(0.9)
-
+                        
                         // Subtle gradient overlay
                         LinearGradient(
                             colors: [
                                 Color.black.opacity(0.95),
-                                Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9),
+                                Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
-
+                        
                         // Very subtle visual effect for depth
                         VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                             .opacity(0.05)
@@ -122,12 +139,12 @@ struct AppNotificationView: View {
             }
         }
     }
-
+    
     private func startProgressTimer() {
         let updateInterval: TimeInterval = 0.1
         let totalSteps = duration / updateInterval
         let stepDecrement = 1.0 / totalSteps
-
+        
         timer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { _ in
             if progress > 0 {
                 progress = max(0, progress - stepDecrement)
@@ -138,3 +155,4 @@ struct AppNotificationView: View {
         }
     }
 }
+

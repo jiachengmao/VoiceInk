@@ -15,8 +15,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/FluidInference/FluidAudio",
       "state" : {
-        "branch" : "main",
-        "revision" : "04747b3e77c824917c2b422a7210ab9de9d3b029"
+        "revision" : "1fdae40660a1ef6cead77cb42f7346e2b51ac317"
       }
     },
     {
@@ -51,7 +50,6 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Beingpax/LLMkit.git",
       "state" : {
-        "branch" : "main",
         "revision" : "91b228d3ff13febc6b61a58e5f3aa27e734d1c01"
       }
     },

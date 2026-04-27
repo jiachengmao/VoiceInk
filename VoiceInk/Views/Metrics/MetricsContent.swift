@@ -3,7 +3,7 @@ import SwiftData
 import os
 
 struct MetricsContent: View {
-    private let logger = Logger(subsystem: "com.prakashjoshipax.VoiceInk", category: "MetricsContent")
+    private let logger = Logger(subsystem: "com.catandorage.VoiceInk", category: "MetricsContent")
     let modelContext: ModelContext
 
     @State private var totalCount: Int = 0
